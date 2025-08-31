@@ -1,1 +1,359 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Styles - Optimized for 7" Touch Display (1280x720) */
+
+// CSS Reset & Base
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+// Color Palette
+:root {
+  --primary-color: #2c3e50;
+  --secondary-color: #34495e;
+  --accent-color: #3498db;
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+  --danger-color: #e74c3c;
+  --background-color: #f8f9fa;
+  --surface-color: #ffffff;
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-muted: #95a5a6;
+  --border-color: #e9ecef;
+  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --radius: 12px;
+  --radius-small: 8px;
+}
+
+// Typography - Optimized for 7" display viewing distance
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 18px; // Larger base font for touch display
+  overflow-x: hidden;
+}
+
+// Container & Layout - Full screen utilization without header
+.container {
+  width: 100vw;
+  height: 100vh;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+// Loading State
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Error State
+.error {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 1px solid #f87171;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  color: #dc2626;
+  font-weight: 500;
+  font-size: 1rem;
+  flex-shrink: 0;
+  
+  strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+  }
+}
+
+// Collection Groups Container - Fill all available space
+.collections-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px; // Space for scrollbar
+}
+
+// Collection Group - Optimized for 7" display, no overflow hidden
+.collection-group {
+  background: var(--surface-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-1px);
+  }
+}
+
+// Group Header - Touch-friendly size with rounded corners
+.group-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 70px; // Touch-friendly height
+  border-radius: var(--radius) var(--radius) 0 0; // Only top corners rounded
+  
+  &.soon {
+    background: linear-gradient(135deg, var(--warning-color), #e67e22);
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.3;
+  }
+  
+  .days-badge {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 110px;
+    text-align: center;
+    
+    &.soon {
+      background: rgba(255, 255, 255, 0.35);
+      animation: pulse 2s infinite;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+// Services Grid - Optimized for 1280px width
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); // 2 columns for 7" display
+  gap: 14px;
+  padding: 16px;
+}
+
+// Service Card - Touch-optimized, no overflow hidden
+.service-card {
+  background: var(--surface-color);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-small);
+  padding: 20px;
+  transition: all 0.2s ease;
+  position: relative;
+  min-height: 130px; // Consistent card height
+  cursor: pointer; // Indicate interactivity for touch
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border-color);
+    transition: background 0.3s ease;
+    border-radius: var(--radius-small) var(--radius-small) 0 0;
+  }
+  
+  &:hover, &:focus {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+  }
+  
+  // Bin Type Colors
+  &.bin-type-refuse::before {
+    background: linear-gradient(90deg, #2c3e50, #34495e);
+  }
+  
+  &.bin-type-recycling::before {
+    background: linear-gradient(90deg, #27ae60, #2ecc71);
+  }
+  
+  &.bin-type-food::before {
+    background: linear-gradient(90deg, #e67e22, #f39c12);
+  }
+  
+  &.bin-type-garden::before {
+    background: linear-gradient(90deg, #16a085, #1abc9c);
+  }
+}
+
+// Service Header
+.service-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  
+  .bin-icon {
+    font-size: 2.5rem; // Larger for better visibility
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+  }
+}
+
+// Service Details
+.service-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+// Detail Row
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .label {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+}
+
+// Schedule
+.schedule {
+  background: var(--background-color);
+  padding: 14px 18px;
+  border-radius: var(--radius-small);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  line-height: 1.4;
+}
+
+// Scrollbar styling for touch display
+.collections-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.collections-container::-webkit-scrollbar-track {
+  background: var(--background-color);
+  border-radius: 4px;
+}
+
+.collections-container::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+  
+  &:hover {
+    background: var(--text-muted);
+  }
+}
+
+// Responsive fallbacks (for development/testing on other devices)
+@media (max-width: 1279px) {
+  .container {
+    max-width: 100vw;
+    padding: 12px;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .group-header {
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+    min-height: auto;
+    
+    h2 {
+      font-size: 1.4rem;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .service-card {
+    padding: 16px;
+    min-height: 120px;
+  }
+  
+  .service-header .bin-icon {
+    font-size: 2rem;
+  }
+}
+
+// Accessibility
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Focus styles for better accessibility on touch display
+.service-card:focus-within,
+.collection-group:focus-within {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 2px;
+}

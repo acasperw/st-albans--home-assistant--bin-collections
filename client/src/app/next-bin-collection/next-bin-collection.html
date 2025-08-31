@@ -1,1 +1,62 @@
-<p>next-bin-collection works!</p>
+<div class="container">
+  <!-- <header class="header">
+    <h1>🗑️ Bin Collection Dates</h1>
+    <p>St Albans Council</p>
+  </header> -->
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading collection dates...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (errorMessage() && !loading()) {
+    <div class="error">
+      <strong>⚠️ Error:</strong> {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Collection Groups -->
+  @if (!loading() && !errorMessage()) {
+    <div class="collections-container">
+      @for (group of groupedCollections(); track group.date) {
+        <div class="collection-group">
+          <div class="group-header" 
+               [ngClass]="{'soon': group.isCollectionSoon}">
+            <h2>Next collection: {{ group.formattedDate }}</h2>
+            <span class="days-badge"
+                  [ngClass]="{'soon': group.isCollectionSoon}">
+              {{ group.daysUntilText }}
+            </span>
+          </div>
+          
+          <div class="services-grid">
+            @for (service of group.services; track service) {
+              <div class="service-card" 
+                   [ngClass]="'bin-type-' + getBinType(service.ServiceName)">
+                <div class="service-header">
+                  <span class="bin-icon">{{ getBinIcon(service.ServiceName) }}</span>
+                  <h3>{{ service.ServiceName }}</h3>
+                </div>
+                @for (header of service.ServiceHeaders; track header) {
+                  <div class="service-details">
+                    <div class="detail-row">
+                      <span class="label">Last collection:</span>
+                      <span class="value">{{ formatDate(header.Last) }}</span>
+                    </div>
+                    <div class="schedule">
+                      📅 {{ header.ScheduleDescription }}
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
