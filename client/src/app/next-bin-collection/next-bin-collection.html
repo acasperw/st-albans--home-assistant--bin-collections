@@ -22,11 +22,11 @@
   <!-- Collection Groups -->
   @if (!loading() && !errorMessage()) {
     <div class="collections-container">
-      @for (group of groupedCollections(); track group.date) {
+      @for (group of enhancedGroupedCollections(); track group.date) {
         <div class="collection-group">
           <div class="group-header" 
                [ngClass]="{'soon': group.isCollectionSoon}">
-            <h2>Next collection: {{ group.formattedDate }}</h2>
+            <h2>{{ group.formattedDate }} {{group.isCollectionSoon ? '- Next collection' : ''}}</h2>
             <span class="days-badge"
                   [ngClass]="{'soon': group.isCollectionSoon}">
               {{ group.daysUntilText }}
@@ -36,16 +36,16 @@
           <div class="services-grid">
             @for (service of group.services; track service) {
               <div class="service-card" 
-                   [ngClass]="'bin-type-' + getBinType(service.ServiceName)">
+                   [ngClass]="'bin-type-' + service.binType">
                 <div class="service-header">
-                  <span class="bin-icon">{{ getBinIcon(service.ServiceName) }}</span>
+                  <span class="bin-icon">{{ service.binIcon }}</span>
                   <h3>{{ service.ServiceName }}</h3>
                 </div>
                 @for (header of service.ServiceHeaders; track header) {
                   <div class="service-details">
                     <div class="detail-row">
                       <span class="label">Last collection:</span>
-                      <span class="value">{{ formatDate(header.Last) }}</span>
+                      <span class="value">{{ header.Last | date:'EEE d MMM':'en-GB' }}</span>
                     </div>
                     <div class="schedule">
                       📅 {{ header.ScheduleDescription }}

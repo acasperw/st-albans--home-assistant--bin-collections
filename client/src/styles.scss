@@ -166,15 +166,15 @@ body {
   50% { opacity: 0.85; }
 }
 
-// Services Grid - Optimized for 1280px width
+// Services Grid - Flexbox layout for equal-width distribution
 .services-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); // 2 columns for 7" display
+  display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   padding: 16px;
 }
 
-// Service Card - Touch-optimized, no overflow hidden
+// Service Card - Flex-grow for equal distribution
 .service-card {
   background: var(--surface-color);
   border: 2px solid var(--border-color);
@@ -182,8 +182,10 @@ body {
   padding: 20px;
   transition: all 0.2s ease;
   position: relative;
-  min-height: 130px; // Consistent card height
-  cursor: pointer; // Indicate interactivity for touch
+  min-height: 130px;
+  cursor: pointer;
+  flex: 1; // Equal distribution of available space
+  min-width: 200px; // Minimum width to prevent cards getting too narrow
   
   &::before {
     content: '';
@@ -225,7 +227,6 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 18px;
   
   .bin-icon {
     font-size: 2.5rem; // Larger for better visibility
@@ -269,14 +270,7 @@ body {
 
 // Schedule
 .schedule {
-  background: var(--background-color);
-  padding: 14px 18px;
-  border-radius: var(--radius-small);
-  color: var(--text-secondary);
-  font-size: 1rem;
-  text-align: center;
-  border: 1px solid var(--border-color);
-  line-height: 1.4;
+  font-size: 0.75rem;
 }
 
 // Scrollbar styling for touch display

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef, computed } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ApiResponse, VeoliaService, CollectionGroup } from './models';
 import { CommonModule } from '@angular/common';
@@ -22,6 +22,18 @@ export class NextBinCollection implements OnInit {
   public collectionDates = signal<VeoliaService[]>([]);
   public groupedCollections = signal<CollectionGroup[]>([]);
   public errorMessage = signal<string | null>(null);
+
+  // Computed signals for enhanced collections with bin type and icon data
+  public enhancedGroupedCollections = computed(() => {
+    return this.groupedCollections().map(group => ({
+      ...group,
+      services: group.services.map(service => ({
+        ...service,
+        binType: this.getBinType(service.ServiceName),
+        binIcon: this.getBinIcon(service.ServiceName)
+      }))
+    }));
+  });
 
   ngOnInit(): void {
     this.fetchCollectionDates();
@@ -79,19 +91,33 @@ export class NextBinCollection implements OnInit {
       .map(([dateKey, services]) => {
         const date = new Date(dateKey);
         const dateString = services[0].ServiceHeaders[0].Next;
+        
+        // Sort services within each group - Food collections come last
+        const sortedServices = services.sort((a, b) => {
+          const aIsFood = a.ServiceName.includes('Food');
+          const bIsFood = b.ServiceName.includes('Food');
+          
+          // If one is food and the other isn't, food goes last
+          if (aIsFood && !bIsFood) return 1;
+          if (!aIsFood && bIsFood) return -1;
+          
+          // If both are food or both are not food, sort alphabetically
+          return a.ServiceName.localeCompare(b.ServiceName);
+        });
+        
         return {
           date: dateString,
           formattedDate: this.formatDate(dateString),
           daysUntil: this.getDaysUntil(dateString),
           daysUntilText: this.getDaysUntilText(dateString),
           isCollectionSoon: this.isCollectionSoon(dateString),
-          services: services
+          services: sortedServices
         };
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 
-  getBinType(serviceName: string): string {
+  private getBinType(serviceName: string): string {
     if (serviceName.includes('Refuse')) return 'refuse';
     if (serviceName.includes('Recycling')) return 'recycling';
     if (serviceName.includes('Food')) return 'food';
@@ -99,7 +125,7 @@ export class NextBinCollection implements OnInit {
     return 'default';
   }
 
-  getBinIcon(serviceName: string): string {
+  private getBinIcon(serviceName: string): string {
     if (serviceName.includes('Refuse')) return '🗑️';
     if (serviceName.includes('Recycling')) return '♻️';
     if (serviceName.includes('Food')) return '🍎';
@@ -107,7 +133,7 @@ export class NextBinCollection implements OnInit {
     return '📦';
   }
 
-  formatDate(dateString: string): string {
+  private formatDate(dateString: string): string {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = { 
       weekday: 'short', 
@@ -117,7 +143,7 @@ export class NextBinCollection implements OnInit {
     return date.toLocaleDateString('en-GB', options);
   }
 
-  getDaysUntil(dateString: string): number {
+  private getDaysUntil(dateString: string): number {
     const date = new Date(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -126,7 +152,7 @@ export class NextBinCollection implements OnInit {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }
 
-  getDaysUntilText(dateString: string): string {
+  private getDaysUntilText(dateString: string): string {
     const days = this.getDaysUntil(dateString);
     if (days === 0) return 'Today!';
     if (days === 1) return 'Tomorrow';
@@ -134,9 +160,9 @@ export class NextBinCollection implements OnInit {
     return `in ${days} days`;
   }
 
-  isCollectionSoon(dateString: string): boolean {
+  private isCollectionSoon(dateString: string): boolean {
     const days = this.getDaysUntil(dateString);
-    return days >= 0 && days <= 3;
+    return days >= 0 && days <= 6;
   }
 
 }
