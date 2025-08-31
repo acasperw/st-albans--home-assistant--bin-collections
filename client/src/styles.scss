@@ -1,41 +1,53 @@
-/* Global Styles - Optimized for 7" Touch Display (1280x720) */
+@use '@patter/patter-core-styles/scss/independent-styles-setup';
+@use '@patter/patter-core-styles/scss/main';
 
-// CSS Reset & Base
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@use "styles/global";
 
-// Color Palette
 :root {
-  --primary-color: #2c3e50;
-  --secondary-color: #34495e;
-  --accent-color: #3498db;
-  --success-color: #27ae60;
-  --warning-color: #f39c12;
-  --danger-color: #e74c3c;
-  --background-color: #f8f9fa;
-  --surface-color: #ffffff;
-  --text-primary: #2c3e50;
-  --text-secondary: #7f8c8d;
+  // Patter setup
+  --wp--preset--font-family--body-font: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --wp--preset--color--primary: #272e3e;
+  --wp--preset--color--secondary: #FFBC00;
+  --wp--preset--color--light: #f4f4f4;
+  --wp--preset--color--dark: #1F1F1F;
+
+  --wp--custom--color--primary-text: var(--wp--preset--color--white);
+  --wp--custom--color--primary-hover-text: var(--wp--preset--color--white);
+  --wp--custom--color--primary-hover: #475370;
+
+  --wp--custom--color--border: #e1e5ea;
+  --wp--custom--default-border-radius: 6px;
+
+  // App styles
   --text-muted: #95a5a6;
-  --border-color: #e9ecef;
+  --warning-color: #f39c12;
   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.06);
   --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --radius: 12px;
-  --radius-small: 8px;
 }
 
-// Typography - Optimized for 7" display viewing distance
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-primary);
-  line-height: 1.5;
-  font-size: 18px; // Larger base font for touch display
-  overflow-x: hidden;
-}
+
+
+
+
+// /* Global Styles - Optimized for 7" Touch Display (1280x720) */
+
+// // Color Palette
+// :root {
+//   --wp--preset--color--primary: #2c3e50;
+//   --wp--preset--color--secondary: #34495e;
+//   --wp--preset--color--secondary: #3498db;
+//   --wp--preset--color--primary: #f8f9fa;
+//   --wp--preset--color--light: #ffffff;
+//   --wp--custom--color--primary-text: #2c3e50;
+//   --wp--preset--color--dark: #7f8c8d;
+//   --text-muted: #95a5a6;
+//   --wp--custom--color--border: #e9ecef;
+//   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.06);
+//   --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+//   --wp--custom--default-border-radius: 12px;
+//   --wp--custom--default-border-radius-small: 8px;
+// }
 
 // Container & Layout - Full screen utilization without header
 .container {
@@ -59,15 +71,15 @@ body {
   .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--accent-color);
+    border: 4px solid var(--wp--custom--color--border);
+    border-top: 4px solid var(--wp--preset--color--secondary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 20px;
   }
 
   p {
-    color: var(--text-secondary);
+    color: var(--wp--preset--color--dark);
     font-size: 1.2rem;
   }
 }
@@ -86,7 +98,7 @@ body {
 .error {
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   border: 1px solid #f87171;
-  border-radius: var(--radius);
+  border-radius: var(--wp--custom--default-border-radius);
   padding: 16px 20px;
   margin-bottom: 16px;
   color: #dc2626;
@@ -113,10 +125,10 @@ body {
 
 // Collection Group - Optimized for 7" display, no overflow hidden
 .collection-group {
-  background: var(--surface-color);
-  border-radius: var(--radius);
+  background: var(--wp--preset--color--light);
+  border-radius: var(--wp--custom--default-border-radius);
   box-shadow: var(--shadow-light);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--wp--custom--color--border);
   transition: all 0.2s ease;
 
   &:hover {
@@ -127,14 +139,14 @@ body {
 
 // Group Header - Touch-friendly size with rounded corners
 .group-header {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: var(--wp--preset--color--primary);
   color: white;
   padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   min-height: 70px; // Touch-friendly height
-  border-radius: var(--radius) var(--radius) 0 0; // Only top corners rounded
+  border-radius: var(--wp--custom--default-border-radius) var(--wp--custom--default-border-radius) 0 0; // Only top corners rounded
 
   &.soon {
     background: linear-gradient(135deg, var(--warning-color), #e67e22);
@@ -188,9 +200,9 @@ body {
 
 // Service Card - Flex-grow for equal distribution
 .service-card {
-  background: var(--surface-color);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-small);
+  background: var(--wp--preset--color--light);
+  border: 2px solid var(--wp--custom--color--border);
+  border-radius: var(--wp--custom--default-border-radius-small);
   padding: 20px;
   transition: all 0.2s ease;
   position: relative;
@@ -206,9 +218,9 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--border-color);
+    background: var(--wp--custom--color--border);
     transition: background 0.3s ease;
-    border-radius: var(--radius-small) var(--radius-small) 0 0;
+    border-radius: var(--wp--custom--default-border-radius-small) var(--wp--custom--default-border-radius-small) 0 0;
   }
 
   &:hover,
@@ -249,7 +261,7 @@ body {
   h3 {
     font-size: 1.2rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--wp--preset--color--dark);
     margin: 0;
     line-height: 1.3;
   }
@@ -269,13 +281,13 @@ body {
   align-items: center;
 
   .label {
-    color: var(--text-secondary);
+    color: var(--wp--preset--color--dark);
     font-size: 1rem;
     font-weight: 500;
   }
 
   .value {
-    color: var(--text-primary);
+    color: var(--wp--preset--color--dark);
     font-weight: 600;
     font-size: 1rem;
   }
@@ -292,12 +304,12 @@ body {
 }
 
 .collections-container::-webkit-scrollbar-track {
-  background: var(--background-color);
+  background: var(--wp--preset--color--primary);
   border-radius: 4px;
 }
 
 .collections-container::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--wp--custom--color--border);
   border-radius: 4px;
 
   &:hover {
@@ -361,7 +373,7 @@ body {
 // Focus styles for better accessibility on touch display
 .service-card:focus-within,
 .collection-group:focus-within {
-  outline: 3px solid var(--accent-color);
+  outline: 3px solid var(--wp--preset--color--secondary);
   outline-offset: 2px;
 }
 

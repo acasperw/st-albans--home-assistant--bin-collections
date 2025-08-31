@@ -1,0 +1,19 @@
+@use '@patter/patter-core-styles/scss/breakpoints' as *;
+
+body {
+  font-family: var(--wp--preset--font-family--body-font);
+  line-height: 1.2;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-size: 1.25rem;
+  color: var(--wp--preset--color--dark);
+  overflow-x: hidden;
+}
+
+h2 {
+  font-size: var(--wp--custom--typography--font-size--heading-2);
+}
+
+h3 {
+  font-size: var(--wp--custom--typography--font-size--heading-3);
+}
