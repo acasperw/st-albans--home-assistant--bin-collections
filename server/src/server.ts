@@ -79,13 +79,13 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
     // Check if we have valid cached data
     if (isCacheValid() && cache.processedData) {
       console.log(`Serving cached processed bin collection data for UPRN: ${uprn}`);
-      res.json(cache);
+      res.json(cache.processedData);
       return;
     }
 
     // Fetch fresh data if cache is invalid or empty
     const tempCache = await fetchFreshData(uprn);
-    res.json(tempCache);
+    res.json(tempCache.processedData);
 
   } catch (error) {
     console.error('Error fetching bin collection data:', error instanceof Error ? error.message : 'Unknown error');
@@ -105,7 +105,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     uprn: UPRN,
     timestamp: new Date().toISOString(),
     cache: {
-      hasData: !!cache.data,
+      hasData: !!cache.processedData,
       ageInMinutes: cacheAge,
       isValid: isCacheValid()
     }

@@ -1,12 +1,18 @@
-import { VeoliaService } from '@server/types';
+// Import the new processed types
+import type { ProcessedApiResponse, ProcessedCollectionDate, ProcessedService, ServiceType } from '@server/types';
 
-export type { ServiceHeader, VeoliaService, ApiResponse } from '@server/types';
+// Re-export for convenience
+export type { ProcessedApiResponse, ProcessedCollectionDate, ProcessedService, ServiceType };
 
-export interface CollectionGroup {
-  date: string;
-  formattedDate: string;
-  daysUntil: number;
-  daysUntilText: string;
-  isCollectionSoon: boolean;
-  services: VeoliaService[];
+// Enhanced service for frontend presentation - extends server interface
+export interface EnhancedProcessedService extends ProcessedService {
+  binIcon: string; // Added for presentation
+}
+
+// Enhanced collection date for frontend presentation - extends server interface
+export interface EnhancedCollectionDate extends ProcessedCollectionDate {
+  formattedDate: string; // Added for presentation
+  daysUntilText: string; // Added for presentation
+  isCollectionSoon: boolean; // Added for presentation
+  services: EnhancedProcessedService[]; // Override with enhanced services
 }

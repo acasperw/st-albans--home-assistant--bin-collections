@@ -32,23 +32,21 @@
       </div>
 
       <div class="services-grid">
-        @for (service of group.services; track service) {
-        <div class="service-card" [ngClass]="'bin-type-' + service.binType">
+        @for (service of group.services; track service.serviceName) {
+        <div class="service-card" [ngClass]="'bin-type-' + service.serviceType">
           <div class="service-header">
             <span class="bin-icon">{{ service.binIcon }}</span>
-            <h3>{{ service.ServiceName }}</h3>
+            <h3>{{ service.serviceName }}</h3>
           </div>
-          @for (header of service.ServiceHeaders; track header) {
           <div class="service-details">
             <div class="detail-row">
               <span class="label">Last collection:</span>
-              <span class="value">{{ header.Last | date:'EEE d MMM':'en-GB' }}</span>
+              <span class="value">{{ service.last | date:'EEE d MMM':'en-GB' }}</span>
             </div>
             <div class="schedule">
-              📅 {{ header.ScheduleDescription }}
+              📅 {{ service.scheduleDescription }}
             </div>
           </div>
-          }
         </div>
         }
       </div>

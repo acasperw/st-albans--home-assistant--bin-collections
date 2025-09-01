@@ -1,13 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal, OnInit, DestroyRef, computed } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { ApiResponse, VeoliaService, CollectionGroup } from './models';
+import { ProcessedApiResponse, EnhancedCollectionDate, EnhancedProcessedService } from './models';
 import { CommonModule } from '@angular/common';
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
 import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bin.component';
-import { CacheData } from '@server/types';
 
 @Component({
   selector: 'app-next-bin-collection',
@@ -24,20 +23,12 @@ export class NextBinCollection implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   public loading = signal(true);
-  public collectionDates = signal<VeoliaService[]>([]);
-  public groupedCollections = signal<CollectionGroup[]>([]);
+  public collectionDates = signal<EnhancedCollectionDate[]>([]);
   public errorMessage = signal<string | null>(null);
 
   // Computed signals for enhanced collections with bin type and icon data
   public enhancedGroupedCollections = computed(() => {
-    return this.groupedCollections().map(group => ({
-      ...group,
-      services: group.services.map(service => ({
-        ...service,
-        binType: this.getBinType(service.ServiceName),
-        binIcon: this.getBinIcon(service.ServiceName)
-      }))
-    }));
+    return this.collectionDates();
   });
 
   ngOnInit(): void {
@@ -55,18 +46,22 @@ export class NextBinCollection implements OnInit {
     this.loading.set(true);
 
     const apiUrl = `${environment.apiBaseUrl}/api/bin-collection`;
-    this.http.get<CacheData>(apiUrl).subscribe({
+    this.http.get<ProcessedApiResponse>(apiUrl).subscribe({
       next: (data) => {
-        // Sort collection dates by next collection date (earliest first)
-        const sortedData = data.data!.d.sort((a, b) => {
-          // Get the next collection date from the first service header
-          const dateA = a.ServiceHeaders?.[0]?.Next ? new Date(a.ServiceHeaders[0].Next).getTime() : 0;
-          const dateB = b.ServiceHeaders?.[0]?.Next ? new Date(b.ServiceHeaders[0].Next).getTime() : 0;
-          return dateA - dateB;
-        });
+        // Transform processed data to enhanced format with presentation data
+        const enhancedCollections = data.collections.map(collection => ({
+          date: collection.date, // Already ISO 8601 format from server
+          daysUntil: collection.daysUntil, // Already calculated by server
+          formattedDate: this.formatDate(collection.date),
+          daysUntilText: this.getDaysUntilText(collection.daysUntil),
+          isCollectionSoon: this.isCollectionSoon(collection.daysUntil),
+          services: collection.services.map(service => ({
+            ...service,
+            binIcon: this.getBinIcon(service.serviceType)
+          }))
+        }));
         
-        this.collectionDates.set(sortedData);
-        this.groupedCollections.set(this.groupCollectionsByDate(sortedData));
+        this.collectionDates.set(enhancedCollections);
         this.loading.set(false);
       },
       error: () => {
@@ -76,66 +71,15 @@ export class NextBinCollection implements OnInit {
     });
   }
 
-  private groupCollectionsByDate(collections: VeoliaService[]): CollectionGroup[] {
-    const groups = new Map<string, VeoliaService[]>();
-    
-    // Group services by their next collection date
-    collections.forEach(service => {
-      const nextDate = service.ServiceHeaders?.[0]?.Next;
-      if (nextDate) {
-        const dateKey = new Date(nextDate).toDateString();
-        if (!groups.has(dateKey)) {
-          groups.set(dateKey, []);
-        }
-        groups.get(dateKey)!.push(service);
-      }
-    });
-    
-    // Convert to CollectionGroup array and sort by date
-    return Array.from(groups.entries())
-      .map(([dateKey, services]) => {
-        const date = new Date(dateKey);
-        const dateString = services[0].ServiceHeaders[0].Next;
-        
-        // Sort services within each group - Food collections come last
-        const sortedServices = services.sort((a, b) => {
-          const aIsFood = a.ServiceName.includes('Food');
-          const bIsFood = b.ServiceName.includes('Food');
-          
-          // If one is food and the other isn't, food goes last
-          if (aIsFood && !bIsFood) return 1;
-          if (!aIsFood && bIsFood) return -1;
-          
-          // If both are food or both are not food, sort alphabetically
-          return a.ServiceName.localeCompare(b.ServiceName);
-        });
-        
-        return {
-          date: dateString,
-          formattedDate: this.formatDate(dateString),
-          daysUntil: this.getDaysUntil(dateString),
-          daysUntilText: this.getDaysUntilText(dateString),
-          isCollectionSoon: this.isCollectionSoon(dateString),
-          services: sortedServices
-        };
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
-  private getBinType(serviceName: string): string {
-    if (serviceName.includes('Refuse')) return 'refuse';
-    if (serviceName.includes('Recycling')) return 'recycling';
-    if (serviceName.includes('Food')) return 'food';
-    if (serviceName.includes('Garden')) return 'garden';
-    return 'default';
-  }
-
-  private getBinIcon(serviceName: string): string {
-    if (serviceName.includes('Refuse')) return '🗑️';
-    if (serviceName.includes('Recycling')) return '♻️';
-    if (serviceName.includes('Food')) return '🍎';
-    if (serviceName.includes('Garden')) return '🌿';
-    return '📦';
+  // Updated helper methods for the new API response format
+  private getBinIcon(serviceType: string): string {
+    switch (serviceType) {
+      case 'refuse': return '🗑️';
+      case 'recycling': return '♻️';
+      case 'food': return '🍎';
+      case 'garden': return '🌿';
+      default: return '📦';
+    }
   }
 
   private formatDate(dateString: string): string {
@@ -148,26 +92,15 @@ export class NextBinCollection implements OnInit {
     return date.toLocaleDateString('en-GB', options);
   }
 
-  private getDaysUntil(dateString: string): number {
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    const diff = date.getTime() - today.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  private getDaysUntilText(daysUntil: number): string {
+    if (daysUntil === 0) return 'Today!';
+    if (daysUntil === 1) return 'Tomorrow';
+    if (daysUntil < 0) return 'Overdue';
+    return `in ${daysUntil} days`;
   }
 
-  private getDaysUntilText(dateString: string): string {
-    const days = this.getDaysUntil(dateString);
-    if (days === 0) return 'Today!';
-    if (days === 1) return 'Tomorrow';
-    if (days < 0) return 'Overdue';
-    return `in ${days} days`;
-  }
-
-  private isCollectionSoon(dateString: string): boolean {
-    const days = this.getDaysUntil(dateString);
-    return days >= 0 && days <= 6;
+  private isCollectionSoon(daysUntil: number): boolean {
+    return daysUntil >= 0 && daysUntil <= 6;
   }
 
 }
