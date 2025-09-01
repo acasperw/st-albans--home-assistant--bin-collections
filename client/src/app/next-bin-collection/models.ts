@@ -1,19 +1,6 @@
-export interface ServiceHeader {
-  TaskType: string;
-  Last: string;
-  Next: string;
-  ScheduleDescription: string;
-}
+import { VeoliaService } from '@server/types';
 
-export interface VeoliaService {
-  __type: string;
-  ServiceHeaders: ServiceHeader[];
-  ServiceName: string;
-}
-
-export interface ApiResponse {
-  d: VeoliaService[];
-}
+export type { ServiceHeader, VeoliaService, ApiResponse } from '@server/types';
 
 export interface CollectionGroup {
   date: string;
