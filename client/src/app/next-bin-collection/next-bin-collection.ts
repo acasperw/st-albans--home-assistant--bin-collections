@@ -82,6 +82,17 @@ export class NextBinCollection implements OnInit {
     }
   }
 
+  // Helper method to get appropriate bin type for wheelie bins
+  public getBinType(serviceType: string): 'brown' | 'black' | 'blue' | 'green' | 'black-body-blue-lid' | 'black-body-purple-lid' {
+    switch (serviceType) {
+      case 'garden': return 'green';
+      case 'refuse': return 'brown';
+      case 'recycling': return 'black';
+      case 'food': return 'green';
+      default: return 'black';
+    }
+  }
+
   private formatDate(dateString: string): string {
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = { 
@@ -100,7 +111,7 @@ export class NextBinCollection implements OnInit {
   }
 
   private isCollectionSoon(daysUntil: number): boolean {
-    return daysUntil >= 0 && daysUntil <= 6;
+    return daysUntil >= 0 && daysUntil <= 2;
   }
 
 }

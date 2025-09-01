@@ -4,27 +4,60 @@ import { SvgSymbolService } from '../../services/svg-symbol.service';
 
 export type WheeliBinType = 'brown' | 'black' | 'blue' | 'green' | 'black-body-blue-lid' | 'black-body-purple-lid';
 
+/**
+ * WheelieBinComponent - A reusable SVG wheelie bin component
+ * 
+ * @Input binType - The color/style of the bin
+ * @Input customAriaLabel - Optional custom accessibility label
+ * @Input icon - Optional icon (emoji or text) to display centrally over the bin
+ * 
+ * Usage:
+ * <app-wheelie-bin binType="blue" icon="♻️"></app-wheelie-bin>
+ */
+
 @Component({
   selector: 'app-wheelie-bin',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <svg 
-      [class]="'bin bin--' + binType" 
-      viewBox="0 0 128 192" 
-      role="img" 
-      [attr.aria-label]="ariaLabel">
-      <use href="#uk-wheelie-bin"></use>
-    </svg>
+    <div class="bin-container">
+      <svg 
+        [class]="'bin bin--' + binType" 
+        viewBox="0 0 128 192" 
+        role="img" 
+        [attr.aria-label]="ariaLabel">
+        <use href="#uk-wheelie-bin"></use>
+      </svg>
+      @if (icon) {
+        <div class="bin-icon-overlay">{{ icon }}</div>
+      }
+    </div>
   `,
   styles: [`
     :host {
       display: inline-block;
     }
     
+    .bin-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    
     .bin {
       width: 100%;
       height: 100%;
+    }
+
+    .bin-icon-overlay {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5rem;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
     }
 
     /* Brown bin */
@@ -69,6 +102,7 @@ export class WheelieBinComponent implements OnInit {
 
   @Input() binType: WheeliBinType = 'black';
   @Input() customAriaLabel?: string;
+  @Input() icon?: string;
 
   ngOnInit(): void {
     this.svgSymbolService.ensureSymbolsLoaded();
