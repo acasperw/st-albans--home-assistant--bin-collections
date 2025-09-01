@@ -5,11 +5,15 @@ import { ApiResponse, VeoliaService, CollectionGroup } from './models';
 import { CommonModule } from '@angular/common';
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
+import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bin.component';
 
 @Component({
   selector: 'app-next-bin-collection',
   imports: [
-    CommonModule
+    CommonModule,
+    WheelieBinComponent,
+    FoodCaddyComponent
   ],
   templateUrl: './next-bin-collection.html'
 })
