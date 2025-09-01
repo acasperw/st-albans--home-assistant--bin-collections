@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import { ApiResponse, CacheData, HealthCheckResponse } from './types';
+import { processApiResponse } from './data-processor';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -10,6 +11,7 @@ const UPRN = process.env.UPRN;
 // Cache configuration
 const cache: CacheData = {
   data: null,
+  processedData: null,
   timestamp: null,
   TTL: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 };
@@ -36,9 +38,9 @@ function isCacheValid(): boolean {
 }
 
 // Helper function to fetch fresh data from API
-async function fetchFreshData(uprn: string): Promise<ApiResponse> {
+async function fetchFreshData(uprn: string): Promise<CacheData> {
   console.log(`Fetching fresh bin collection data from API for UPRN: ${uprn}`);
-  
+
   const response = await axios.post<ApiResponse>(
     'https://gis.stalbans.gov.uk/NoticeBoard9/VeoliaProxy.NoticeBoard.asmx/GetServicesByUprnAndNoticeBoard',
     {
@@ -52,41 +54,42 @@ async function fetchFreshData(uprn: string): Promise<ApiResponse> {
       }
     }
   );
-  
-  // Update cache
+
+  // Update cache with both raw and processed data
   cache.data = response.data;
+  cache.processedData = processApiResponse(response.data);
   cache.timestamp = Date.now();
-  
+
   console.log('Successfully fetched and cached bin collection data');
-  return response.data;
+  return cache;
 }
 
 app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void> => {
   try {
     if (!UPRN) {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'UPRN not configured',
-        message: 'UPRN environment variable is required' 
+        message: 'UPRN environment variable is required'
       });
       return;
     }
 
     const uprn = UPRN;
-    
+
     // Check if we have valid cached data
-    if (isCacheValid()) {
-      console.log(`Serving cached bin collection data for UPRN: ${uprn}`);
-      res.json(cache.data);
+    if (isCacheValid() && cache.processedData) {
+      console.log(`Serving cached processed bin collection data for UPRN: ${uprn}`);
+      res.json(cache);
       return;
     }
-    
+
     // Fetch fresh data if cache is invalid or empty
-    const data = await fetchFreshData(uprn);
-    res.json(data);
-    
+    const tempCache = await fetchFreshData(uprn);
+    res.json(tempCache);
+
   } catch (error) {
     console.error('Error fetching bin collection data:', error instanceof Error ? error.message : 'Unknown error');
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch bin collection data',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -96,8 +99,8 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   const cacheAge = cache.timestamp ? Math.floor((Date.now() - cache.timestamp) / 1000 / 60) : null;
-  
-  const healthResponse: HealthCheckResponse = { 
+
+  const healthResponse: HealthCheckResponse = {
     status: 'healthy',
     uprn: UPRN,
     timestamp: new Date().toISOString(),

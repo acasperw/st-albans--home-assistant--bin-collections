@@ -7,6 +7,7 @@ import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
 import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bin.component';
+import { CacheData } from '@server/types';
 
 @Component({
   selector: 'app-next-bin-collection',
@@ -54,10 +55,10 @@ export class NextBinCollection implements OnInit {
     this.loading.set(true);
 
     const apiUrl = `${environment.apiBaseUrl}/api/bin-collection`;
-    this.http.get<ApiResponse>(apiUrl).subscribe({
+    this.http.get<CacheData>(apiUrl).subscribe({
       next: (data) => {
         // Sort collection dates by next collection date (earliest first)
-        const sortedData = data.d.sort((a, b) => {
+        const sortedData = data.data!.d.sort((a, b) => {
           // Get the next collection date from the first service header
           const dateA = a.ServiceHeaders?.[0]?.Next ? new Date(a.ServiceHeaders[0].Next).getTime() : 0;
           const dateB = b.ServiceHeaders?.[0]?.Next ? new Date(b.ServiceHeaders[0].Next).getTime() : 0;
