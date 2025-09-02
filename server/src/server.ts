@@ -3,10 +3,14 @@ import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import { ApiResponse, CacheData, HealthCheckResponse } from './types';
 import { processApiResponse } from './data-processor';
+import { generateTestData } from './test-data';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
 const UPRN = process.env.UPRN;
+
+// Test mode configuration - set to true to return mock data
+const TEST_MODE = process.env.TEST_MODE === 'true' || false;
 
 // Cache configuration
 const cache: CacheData = {
@@ -66,6 +70,14 @@ async function fetchFreshData(uprn: string): Promise<CacheData> {
 
 app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void> => {
   try {
+    // If test mode is enabled, return mock data
+    if (TEST_MODE) {
+      console.log('TEST_MODE enabled: returning mock data with tomorrow\'s collection');
+      const testData = generateTestData();
+      res.json(testData);
+      return;
+    }
+
     if (!UPRN) {
       res.status(500).json({
         error: 'UPRN not configured',
@@ -111,11 +123,17 @@ app.get('/api/health', (req: Request, res: Response) => {
     }
   };
 
+  // Add test mode info to response
+  (healthResponse as any).testMode = TEST_MODE;
+
   res.json(healthResponse);
 });
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  if (TEST_MODE) {
+    console.log('🧪 TEST_MODE enabled: Server will return mock data with tomorrow\'s collection');
+  }
 });
 
 // Graceful shutdown
