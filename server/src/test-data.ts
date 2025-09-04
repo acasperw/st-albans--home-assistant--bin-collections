@@ -1,22 +1,140 @@
 import { ProcessedApiResponse } from './types';
 
-/**
- * Generates mock test data with a "tomorrow" collection date
- * This is useful for testing the UI without needing real API data
- */
-export function generateTestData(): ProcessedApiResponse {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(0, 0, 0, 0);
-  
-  const dayAfterTomorrow = new Date();
-  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 8);
-  dayAfterTomorrow.setHours(0, 0, 0, 0);
-  
-  const twoWeeksLater = new Date();
-  twoWeeksLater.setDate(twoWeeksLater.getDate() + 15);
-  twoWeeksLater.setHours(0, 0, 0, 0);
+export type TestScenario = 'tomorrow' | 'gap' | 'today';
 
+/**
+ * Generates mock test data for different scenarios:
+ * - tomorrow (default): next collection is tomorrow
+ * - gap: no collection tomorrow or today; first is in 3 days
+ * - today: collection happening today (daysUntil 0)
+ */
+export function generateTestData(scenario: TestScenario = 'tomorrow'): ProcessedApiResponse {
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+
+  const addDays = (n: number) => {
+    const d = new Date(base);
+    d.setDate(d.getDate() + n);
+    return d;
+  };
+
+  if (scenario === 'today') {
+    const today = addDays(0);
+    const nextWeek = addDays(7);
+    return {
+      collections: [
+        {
+          date: today.toISOString(),
+          daysUntil: 0,
+            services: [
+              {
+                serviceName: 'Food Waste',
+                serviceType: 'food',
+                taskType: 'Collection',
+                last: addDays(-7).toISOString(),
+                next: today.toISOString(),
+                scheduleDescription: 'Weekly Collection'
+              },
+              {
+                serviceName: 'Refuse',
+                serviceType: 'refuse',
+                taskType: 'Collection',
+                last: addDays(-14).toISOString(),
+                next: today.toISOString(),
+                scheduleDescription: 'Fortnightly Collection'
+              }
+            ]
+        },
+        {
+          date: nextWeek.toISOString(),
+          daysUntil: 7,
+          services: [
+            {
+              serviceName: 'Food Waste',
+              serviceType: 'food',
+              taskType: 'Collection',
+              last: today.toISOString(),
+              next: nextWeek.toISOString(),
+              scheduleDescription: 'Weekly Collection'
+            },
+            {
+              serviceName: 'Recycling',
+              serviceType: 'recycling',
+              taskType: 'Collection',
+              last: addDays(-7).toISOString(),
+              next: nextWeek.toISOString(),
+              scheduleDescription: 'Fortnightly Collection'
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  if (scenario === 'gap') {
+    const inThree = addDays(3);
+    const inTen = addDays(10);
+    const inSeventeen = addDays(17);
+    return {
+      collections: [
+        {
+          date: inThree.toISOString(),
+          daysUntil: 3,
+          services: [
+            {
+              serviceName: 'Recycling',
+              serviceType: 'recycling',
+              taskType: 'Collection',
+              last: addDays(-11).toISOString(),
+              next: inThree.toISOString(),
+              scheduleDescription: 'Fortnightly Collection'
+            }
+          ]
+        },
+        {
+          date: inTen.toISOString(),
+          daysUntil: 10,
+          services: [
+            {
+              serviceName: 'Food Waste',
+              serviceType: 'food',
+              taskType: 'Collection',
+              last: addDays(3).toISOString(),
+              next: inTen.toISOString(),
+              scheduleDescription: 'Weekly Collection'
+            },
+            {
+              serviceName: 'Garden Waste',
+              serviceType: 'garden',
+              taskType: 'Collection',
+              last: addDays(-4).toISOString(),
+              next: inTen.toISOString(),
+              scheduleDescription: 'Fortnightly Collection'
+            }
+          ]
+        },
+        {
+          date: inSeventeen.toISOString(),
+          daysUntil: 17,
+          services: [
+            {
+              serviceName: 'Refuse',
+              serviceType: 'refuse',
+              taskType: 'Collection',
+              last: addDays(3).toISOString(),
+              next: inSeventeen.toISOString(),
+              scheduleDescription: 'Fortnightly Collection'
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  // default 'tomorrow'
+  const tomorrow = addDays(1);
+  const eight = addDays(8);
+  const fifteen = addDays(15);
   return {
     collections: [
       {
@@ -24,64 +142,64 @@ export function generateTestData(): ProcessedApiResponse {
         daysUntil: 1,
         services: [
           {
-            serviceName: "Food Waste",
-            serviceType: "food",
-            taskType: "Collection",
-            last: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            serviceName: 'Food Waste',
+            serviceType: 'food',
+            taskType: 'Collection',
+            last: addDays(-6).toISOString(),
             next: tomorrow.toISOString(),
-            scheduleDescription: "Weekly Collection"
+            scheduleDescription: 'Weekly Collection'
           },
           {
-            serviceName: "Recycling",
-            serviceType: "recycling",
-            taskType: "Collection", 
-            last: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+            serviceName: 'Recycling',
+            serviceType: 'recycling',
+            taskType: 'Collection',
+            last: addDays(-13).toISOString(),
             next: tomorrow.toISOString(),
-            scheduleDescription: "Fortnightly Collection"
+            scheduleDescription: 'Fortnightly Collection'
           }
         ]
       },
       {
-        date: dayAfterTomorrow.toISOString(),
+        date: eight.toISOString(),
         daysUntil: 8,
         services: [
           {
-            serviceName: "Food Waste",
-            serviceType: "food",
-            taskType: "Collection",
+            serviceName: 'Food Waste',
+            serviceType: 'food',
+            taskType: 'Collection',
             last: tomorrow.toISOString(),
-            next: dayAfterTomorrow.toISOString(),
-            scheduleDescription: "Weekly Collection"
+            next: eight.toISOString(),
+            scheduleDescription: 'Weekly Collection'
           },
           {
-            serviceName: "Refuse",
-            serviceType: "refuse",
-            taskType: "Collection",
-            last: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            next: dayAfterTomorrow.toISOString(),
-            scheduleDescription: "Fortnightly Collection"
+            serviceName: 'Refuse',
+            serviceType: 'refuse',
+            taskType: 'Collection',
+            last: addDays(-13).toISOString(),
+            next: eight.toISOString(),
+            scheduleDescription: 'Fortnightly Collection'
           }
         ]
       },
       {
-        date: twoWeeksLater.toISOString(),
+        date: fifteen.toISOString(),
         daysUntil: 15,
         services: [
           {
-            serviceName: "Garden Waste",
-            serviceType: "garden",
-            taskType: "Collection",
-            last: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            next: twoWeeksLater.toISOString(),
-            scheduleDescription: "Fortnightly Collection"
+            serviceName: 'Garden Waste',
+            serviceType: 'garden',
+            taskType: 'Collection',
+            last: addDays(-13).toISOString(),
+            next: fifteen.toISOString(),
+            scheduleDescription: 'Fortnightly Collection'
           },
           {
-            serviceName: "Food Waste",
-            serviceType: "food",
-            taskType: "Collection",
-            last: dayAfterTomorrow.toISOString(),
-            next: twoWeeksLater.toISOString(),
-            scheduleDescription: "Weekly Collection"
+            serviceName: 'Food Waste',
+            serviceType: 'food',
+            taskType: 'Collection',
+            last: eight.toISOString(),
+            next: fifteen.toISOString(),
+            scheduleDescription: 'Weekly Collection'
           }
         ]
       }

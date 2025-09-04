@@ -1,8 +1,8 @@
-<div class="container">
-  <!-- <header class="header">
-    <h1>🗑️ Bin Collection Dates</h1>
-    <p>St Albans Council</p>
-  </header> -->
+<div class="container" [class.night-mode]="nightMode()">
+  <!-- <button class="mode-toggle" type="button" (click)="toggleNightMode()" [attr.aria-pressed]="nightMode()"
+    aria-label="Toggle night mode">
+    <span aria-hidden="true">{{ nightMode() ? '🌙' : '☀️' }}</span>
+  </button> -->
 
   <!-- Loading State -->
   @if (loading()) {
@@ -19,10 +19,39 @@
   </div>
   }
 
-  <!-- Collection Groups -->
-  @if (!loading() && !errorMessage()) {
+  <!-- Hero Full Screen Mode -->
+  @if (!loading() && !errorMessage() && showHero() && summaryCollection()) {
+  <section class="hero" role="region" aria-labelledby="hero-heading">
+    <div class="hero-inner">
+      <header class="hero-header">
+        <h1 id="hero-heading">{{ summaryHeadline() }}</h1>
+        <div class="hero-date">{{ summaryCollection().formattedDate }}</div>
+      </header>
+      <div class="hero-bins">
+        @for (svc of summaryCollection().services; track svc.serviceType) {
+        @if (svc.serviceType === 'food') {
+        <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
+          <app-food-caddy caddyType="green" [icon]="svc.binIcon" [customAriaLabel]="svc.serviceName" />
+          <div class="hero-bin-label">{{ svc.serviceName }}</div>
+        </div>
+        } @else {
+        <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
+          <app-wheelie-bin [binType]="getBinType(svc.serviceType)" [icon]="svc.binIcon"
+            [customAriaLabel]="svc.serviceName" />
+          <div class="hero-bin-label">{{ svc.serviceName }}</div>
+        </div>
+        }
+        }
+      </div>
+
+    </div>
+  </section>
+  }
+
+  <!-- Standard List Mode -->
+  @if (!loading() && !errorMessage() && !showHero()) {
   <div class="collections-container">
-    @for (group of enhancedGroupedCollections(); track group.date) {
+  @for (group of collectionDates(); track group.date) {
     <div class="collection-group">
       <div class="group-header" [ngClass]="{'soon': group.isCollectionSoon}">
         <h2>{{ group.formattedDate }} {{group.isCollectionSoon ? '- Next collection' : ''}}</h2>
@@ -32,7 +61,7 @@
       </div>
 
       <div class="services-grid">
-        @for (service of group.services; track service.serviceName) {
+  @for (service of group.services; track service.serviceType) {
         <div class="service-card" [ngClass]="'bin-type-' + service.serviceType">
           <div class="service-header">
             @if (service.serviceType === 'food') {

@@ -8,4 +8,6 @@ Add server/.env file with
 ```
 PORT=3000
 UPRN=xxxx
+TEST_MODE=false
+TEST_MODE_VARIANT=tomorrow
 '''

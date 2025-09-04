@@ -3,7 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import { ApiResponse, CacheData, HealthCheckResponse } from './types';
 import { processApiResponse } from './data-processor';
-import { generateTestData } from './test-data';
+import { generateTestData, TestScenario } from './test-data';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -11,6 +11,7 @@ const UPRN = process.env.UPRN;
 
 // Test mode configuration - set to true to return mock data
 const TEST_MODE = process.env.TEST_MODE === 'true' || false;
+const TEST_MODE_VARIANT: TestScenario = (process.env.TEST_MODE_VARIANT as TestScenario) || 'tomorrow';
 
 // Cache configuration
 const cache: CacheData = {
@@ -72,8 +73,8 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
   try {
     // If test mode is enabled, return mock data
     if (TEST_MODE) {
-      console.log('TEST_MODE enabled: returning mock data with tomorrow\'s collection');
-      const testData = generateTestData();
+      console.log(`TEST_MODE enabled: returning mock data scenario='${TEST_MODE_VARIANT}'`);
+      const testData = generateTestData(TEST_MODE_VARIANT);
       res.json(testData);
       return;
     }
@@ -125,6 +126,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 
   // Add test mode info to response
   (healthResponse as any).testMode = TEST_MODE;
+  (healthResponse as any).testModeVariant = TEST_MODE_VARIANT;
 
   res.json(healthResponse);
 });
@@ -132,7 +134,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   if (TEST_MODE) {
-    console.log('🧪 TEST_MODE enabled: Server will return mock data with tomorrow\'s collection');
+    console.log(`🧪 TEST_MODE enabled: Server will return mock data scenario='${TEST_MODE_VARIANT}'`);
   }
 });
 
