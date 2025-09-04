@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { ApiResponse, CacheData, HealthCheckResponse } from './types';
 import { processApiResponse } from './data-processor';
 import { generateTestData, TestScenario } from './test-data';
@@ -23,7 +25,15 @@ const cache: CacheData = {
 
 const app = express();
 
+// Using CommonJS compilation; __dirname available after build.
+
 app.use(express.json());
+
+// In production, serve the Angular built files (expected copied to ../client-dist)
+// Build pipeline will place Angular dist at server/dist/../client-dist (root/dist-client)
+const staticDir = path.join(__dirname, '..', 'client');
+// If the directory exists, mount it
+app.use(express.static(staticDir));
 
 // Enable CORS for API routes during development
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
@@ -131,8 +141,18 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json(healthResponse);
 });
 
+// Fallback for SPA routes (after API & static) – send index.html if it exists
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  const indexPath = path.join(staticDir, 'index.html');
+  res.sendFile(indexPath, err => {
+    if (err) next();
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`Serving static Angular content from: ${staticDir}`);
   if (TEST_MODE) {
     console.log(`🧪 TEST_MODE enabled: Server will return mock data scenario='${TEST_MODE_VARIANT}'`);
   }

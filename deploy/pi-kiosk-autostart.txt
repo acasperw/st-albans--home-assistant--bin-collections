@@ -1,0 +1,7 @@
+# Add these lines to /etc/xdg/lxsession/LXDE-pi/autostart (system-wide)
+# or ~/.config/lxsession/LXDE-pi/autostart (user) on Raspberry Pi OS with desktop.
+
+@xset s off
+@xset -dpms
+@xset s noblank
+@chromium-browser --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
