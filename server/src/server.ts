@@ -29,11 +29,12 @@ const app = express();
 
 app.use(express.json());
 
-// In production, serve the Angular built files (expected copied to ../client-dist)
-// Build pipeline will place Angular dist at server/dist/../client-dist (root/dist-client)
-const staticDir = path.join(__dirname, '..', 'client');
-// If the directory exists, mount it
-app.use(express.static(staticDir));
+// Serve Angular static files (assumes Angular build outputs browser folder)
+const activeClientDir = path.join(__dirname, '..', '..', 'client', 'dist', 'bin-collection-app', 'browser');
+import { existsSync } from 'fs';
+if (existsSync(activeClientDir)) {
+  app.use(express.static(activeClientDir));
+}
 
 // Enable CORS for API routes during development
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
@@ -54,7 +55,7 @@ function isCacheValid(): boolean {
 
 // Helper function to fetch fresh data from API
 async function fetchFreshData(uprn: string): Promise<CacheData> {
-  console.log(`Fetching fresh bin collection data from API for UPRN: ${uprn}`);
+  // console.log(`Fetching fresh bin collection data from API for UPRN: ${uprn}`);
 
   const response = await axios.post<ApiResponse>(
     'https://gis.stalbans.gov.uk/NoticeBoard9/VeoliaProxy.NoticeBoard.asmx/GetServicesByUprnAndNoticeBoard',
@@ -75,7 +76,7 @@ async function fetchFreshData(uprn: string): Promise<CacheData> {
   cache.processedData = processApiResponse(response.data);
   cache.timestamp = Date.now();
 
-  console.log('Successfully fetched and cached bin collection data');
+  // Successfully fetched and cached bin collection data
   return cache;
 }
 
@@ -101,7 +102,7 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
 
     // Check if we have valid cached data
     if (isCacheValid() && cache.processedData) {
-      console.log(`Serving cached processed bin collection data for UPRN: ${uprn}`);
+      // Serving cached processed bin collection data for UPRN: ${uprn}
       res.json(cache.processedData);
       return;
     }
@@ -141,21 +142,21 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json(healthResponse);
 });
 
-// Fallback for SPA routes (after API & static) – send index.html if it exists
-app.get('*', (req, res, next) => {
+// (Simplified) No late-mount logic; rebuild before starting server if missing.
+
+// SPA fallback middleware (must be AFTER other routes & static)
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
   if (req.path.startsWith('/api')) return next();
-  const indexPath = path.join(staticDir, 'index.html');
-  res.sendFile(indexPath, err => {
-    if (err) next();
-  });
+  if (!existsSync(activeClientDir)) return next();
+  const indexPath = path.join(activeClientDir, 'index.html');
+  if (!existsSync(indexPath)) return next();
+  res.sendFile(indexPath, err => { if (err) next(); });
 });
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
-  console.log(`Serving static Angular content from: ${staticDir}`);
-  if (TEST_MODE) {
-    console.log(`🧪 TEST_MODE enabled: Server will return mock data scenario='${TEST_MODE_VARIANT}'`);
-  }
+  // Server listening on port ${PORT}
 });
 
 // Graceful shutdown

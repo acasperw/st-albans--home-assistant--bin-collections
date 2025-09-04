@@ -149,6 +149,11 @@ cd server && npm run dev
 cd client && npm start
 ```
 
+Notes:
+- In dev the server will print a message if the built Angular directory is missing; this is normal.
+- For dev, browse Angular at http://localhost:4200 (proxy requests to the API manually) or build once (`cd client && npm run build`) to test the integrated static serving at http://localhost:3000.
+- Re-run `npm run build` in `client` if you want updated static assets without restarting the server.
+
 ## 12. Original Quick Setup (legacy)
 Old note kept for reference:
 ```

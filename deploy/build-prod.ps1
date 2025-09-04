@@ -31,12 +31,12 @@ New-Item -ItemType Directory -Path (Join-Path $packageDir 'server') | Out-Null
 Copy-Item server\dist -Destination (Join-Path $packageDir 'server') -Recurse
 Copy-Item server\package.json (Join-Path $packageDir 'server')
 
-# Copy client dist (Angular outputs to client/dist/bin-collection-app)
+# Copy client dist (Angular outputs to client/dist/bin-collection-app/browser)
 Write-Host "== Copy client =="
-$clientOut = "client/dist/bin-collection-app"
-if (!(Test-Path $clientOut)) { throw "Client build output not found at $clientOut" }
+$clientOut = "client/dist/bin-collection-app/browser"
+if (!(Test-Path $clientOut)) { throw "Client browser build output not found at $clientOut (run client build)" }
 New-Item -ItemType Directory -Path (Join-Path $packageDir 'server' 'client') | Out-Null
-Copy-Item $clientOut/* (Join-Path $packageDir 'server' 'client') -Recurse
+Copy-Item "$clientOut/*" (Join-Path $packageDir 'server' 'client') -Recurse
 
 # Create environment sample
 @(

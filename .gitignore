@@ -135,6 +135,7 @@ Thumbs.db
 
 # Local storage
 server/data
+server/client
 
 # Environment variables
 .env
