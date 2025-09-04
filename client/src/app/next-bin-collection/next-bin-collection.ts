@@ -52,8 +52,8 @@ export class NextBinCollection implements OnInit {
   public summaryHeadline = computed(() => {
     const col = this.summaryCollection();
     if (!col) return 'No upcoming collections found';
-    if (col === this.tomorrowCollection()) return 'Put out tomorrow';
-    if (col === this.todayCollection()) return 'Put out today';
+    if (col === this.tomorrowCollection()) return 'Put out tonight!';
+    if (col === this.todayCollection()) return 'Today\'s collection';
     // Otherwise it's a future collection beyond tomorrow
     if (col.daysUntil === 2) return 'In 2 days:';
     return `In ${col.daysUntil} days (${this.formatDate(col.date)}):`;
