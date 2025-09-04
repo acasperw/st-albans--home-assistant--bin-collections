@@ -1,23 +1,27 @@
-# Quality Check Notes
+# Quality Check (before deploying or restarting service)
 
-Build steps to verify locally before packaging:
+Run the simplified build script (can be on dev machine or directly on the Raspberry Pi):
+```
+./deploy/build-release.sh
+```
+This performs:
+1. Angular production build (`client/dist/bin-collection-app/browser`)
+2. Server TypeScript compile (`server/dist`)
 
-1. Server TypeScript compile
-```
-cd server
-npm install
-npm run build
-```
-2. Angular production build
-```
-cd client
-npm install
-npm run build
-```
-3. Start server pointing at built client (optional local test)
+Smoke test locally:
 ```
 cd server
 node dist/server.js
 # Visit http://localhost:3000
 ```
-If index.html loads (may show CORS warnings if accessing API from dev server) the static serving path is good.
+You should see the app load from the built Angular assets. If it loads, static serving + SPA fallback are working.
+
+Environment file reminder (`server/.env` on Pi):
+```
+UPRN=YOUR_UPRN
+PORT=3000
+# TEST_MODE=true
+# TEST_MODE_VARIANT=tomorrow|weekend|empty|far
+```
+
+Systemd service will use the `PORT` and `UPRN` values from this file.

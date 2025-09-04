@@ -1,167 +1,110 @@
 # st-albans-recycling-refuse-collections
-Simple Angular + Node (Express) application intended to run on a Raspberry Pi with an attached display (kiosk).
+Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin collection info.
 
-## TL;DR (Quick Deploy)
-On dev machine (PowerShell):
+## Quick Start (Simplest Path – Build Directly on Pi)
+On the Raspberry Pi (first time):
 ```
-pwsh ./deploy/build-prod.ps1
-scp .\release\st-albans-*.tar.gz pi@raspberrypi.local:/home/pi/
-```
-On Pi (SSH):
-```
-cd /home/pi
-tar -xzf st-albans-<timestamp>.tar.gz
-sudo mv st-albans-<timestamp> /opt/
-sudo ln -sfn /opt/st-albans-<timestamp> /opt/st-albans
-sudo cp /opt/st-albans/server/.env.sample /opt/st-albans/server/.env
-sudo nano /opt/st-albans/server/.env   # set UPRN
-sudo cp /home/pi/deploy/st-albans.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now st-albans
-```
-Optional kiosk (add to `~/.config/lxsession/LXDE-pi/autostart`):
-```
-@chromium-browser --kiosk http://localhost:3000
-```
-Update later: build new tar -> copy -> extract -> move -> update symlink -> `sudo systemctl restart st-albans`.
-
-## Overview
-The Angular app is built to static files and served directly by the Node server (Express). One systemd unit keeps the server alive; Chromium runs in kiosk mode pointing to `http://localhost:3000`.
-
-## 1. Build Production Artifacts (on your development machine)
-Requires Node + npm. Run the PowerShell script:
-
-```
-pwsh ./deploy/build-prod.ps1
-```
-
-Output:
-- `release/st-albans-<timestamp>/server` (server dist + Angular static files under `server/client`)
-- `release/st-albans-<timestamp>.tar.gz` (upload this to the Pi)
-
-## 2. Transfer to Raspberry Pi
-Copy the generated `.tar.gz` to the Pi (replace `<host>` and `<file>`):
-
-```
-scp release/st-albans-*.tar.gz pi@<host>:/home/pi/
-```
-
-## 3. Install Node.js on Pi (once)
-On the Pi:
-```
+sudo apt-get update
+sudo apt-get install -y curl chromium-browser git
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs chromium-browser
+sudo apt-get install -y nodejs
 ```
+Clone repo:
+```
+cd /opt
+sudo git clone https://github.com/acasperw/st-albans-recycling-refuse-collections st-albans
+sudo chown -R pi:pi st-albans
+cd st-albans
+```
+Build (installs deps + compiles Angular + server):
+```
+./deploy/build-release.sh
+```
+Create environment file:
+```
+cp server/.env.sample server/.env
+nano server/.env   # set UPRN
+```
+Test run:
+```
+cd server
+node dist/server.js
+# Visit http://localhost:3000
+```
+If it loads, stop with Ctrl+C and set up the service.
 
-## 4. Deploy/Install Artifact on Pi
-On the Pi (adjust the filename):
+Install systemd service (one‑time):
 ```
-cd /home/pi
-tar -xzf st-albans-<timestamp>.tar.gz
-sudo rm -f /opt/st-albans
-sudo mv st-albans-<timestamp> /opt/
-sudo ln -sfn /opt/st-albans-<timestamp> /opt/st-albans
-```
-
-## 5. Environment Configuration
-Create the environment file:
-```
-sudo cp /opt/st-albans/server/.env.sample /opt/st-albans/server/.env
-sudo nano /opt/st-albans/server/.env
-```
-Populate:
-```
-PORT=3000
-UPRN=YOUR_UPRN_VALUE
-# Optional test settings
-# TEST_MODE=true
-# TEST_MODE_VARIANT=tomorrow
-```
-
-## 6. systemd Service (one‑time)
-Copy service unit and enable:
-```
-sudo cp /opt/st-albans/server/../deploy/st-albans.service /etc/systemd/system/st-albans.service 2>/dev/null || sudo cp /home/pi/deploy/st-albans.service /etc/systemd/system/
+sudo cp deploy/st-albans.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now st-albans
 ```
-Check status/logs:
+Check logs:
 ```
-systemctl status st-albans
 journalctl -u st-albans -f
 ```
 
-Service runs: `/usr/bin/node dist/server.js` inside `/opt/st-albans/server`.
+## Updating Later
+SSH to Pi:
+```
+cd /opt/st-albans
+git pull
+./deploy/build-release.sh
+sudo systemctl restart st-albans
+```
+Only rebuilds what’s needed; no archives or symlinks required.
 
-## 7. Kiosk Autostart (Chromium)
-Append the lines in `deploy/pi-kiosk-autostart.txt` to:
+Shortcut (single script):
+```
+./deploy/update-and-restart.sh
+```
+Just ensure you committed & pushed changes first.
+
+## Kiosk Mode (Chromium Autostart)
+Append the contents of `./deploy/pi-kiosk-autostart.txt` to:
 ```
 ~/.config/lxsession/LXDE-pi/autostart
 ```
-Create the folder/file if missing. Example:
-```
-mkdir -p ~/.config/lxsession/LXDE-pi
-nano ~/.config/lxsession/LXDE-pi/autostart
-```
-Paste content:
-```
-@xset s off
-@xset -dpms
-@xset s noblank
-@chromium-browser --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
-```
-Reboot to test kiosk:
+Create file if missing. Reboot to confirm kiosk:
 ```
 sudo reboot
 ```
 
-## 8. Updating to a New Version
-On dev machine: re-run build script -> new `.tar.gz`.
-On Pi:
+## Environment `.env` (server/.env)
 ```
-scp newfile.tar.gz pi@<host>:/home/pi/
-ssh pi@<host>
-tar -xzf newfile.tar.gz
-sudo mv st-albans-<newtimestamp> /opt/
-sudo ln -sfn /opt/st-albans-<newtimestamp> /opt/st-albans
-sudo systemctl restart st-albans
-```
-Nothing else needed unless `.env` keys changed.
-
-## 9. Directory Layout on Pi (after deploy)
-```
-/opt/st-albans/
-	server/
-		dist/server.js
-		client/ (Angular static files)
-		.env
+UPRN=YOUR_UPRN
+PORT=3000
+# TEST_MODE=true
+# TEST_MODE_VARIANT=tomorrow|weekend|empty|far
 ```
 
-## 10. Minimal Troubleshooting
-- Blank screen: Press F5 / ensure service running.
-- API not loading: check `journalctl -u st-albans -f`.
-- Change UPRN: edit `/opt/st-albans/server/.env` then `sudo systemctl restart st-albans`.
+## What The Build Script Does
+`./deploy/build-release.sh`:
+1. Installs/updates dependencies in `client` & runs Angular prod build.
+2. Installs/updates dependencies in `server` & compiles TypeScript to `server/dist`.
+3. Server serves the built Angular assets from its static directory.
 
-## 11. Local Development (optional)
-Run server and Angular separately:
+## Local Development
+Separate dev servers:
 ```
 cd server && npm run dev
 cd client && npm start
 ```
-
-Notes:
-- In dev the server will print a message if the built Angular directory is missing; this is normal.
-- For dev, browse Angular at http://localhost:4200 (proxy requests to the API manually) or build once (`cd client && npm run build`) to test the integrated static serving at http://localhost:3000.
-- Re-run `npm run build` in `client` if you want updated static assets without restarting the server.
-
-## 12. Original Quick Setup (legacy)
-Old note kept for reference:
+Integrated (simulate prod):
 ```
-PORT=3000
-UPRN=xxxx
-TEST_MODE=false
-TEST_MODE_VARIANT=tomorrow
+cd client && npm run build
+cd server && npm run build && node dist/server.js
 ```
 
----
-"Fire & forget" steps: build -> copy archive -> extract to versioned dir -> update symlink -> restart service.
+## Troubleshooting
+- Blank screen: ensure service running (`systemctl status st-albans`).
+- 404 on assets: rerun build script.
+- Update UPRN: edit `server/.env`, restart service.
+- Logs: `journalctl -u st-albans -f`.
+ - Quick restart + logs: `./deploy/restart-service.sh`
+
+## Previous Packaging Approach
+Earlier tar/PowerShell packaging removed in favor of simpler on-device build (Pi 5 performance is sufficient). For deterministic immutable releases you could reintroduce an artifact build, but not required for rare updates.
+
+## License
+MIT (if you intend to add one – currently unspecified).
