@@ -2,10 +2,9 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { ApiResponse, CacheData, HealthCheckResponse } from './types';
+import { ApiResponse, CacheData, HealthCheckResponse, TestScenario } from './types';
 import { processApiResponse } from './data-processor';
-import { generateTestData, TestScenario } from './test-data';
+import { generateTestData } from './test-data';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -132,12 +131,12 @@ app.get('/api/health', (req: Request, res: Response) => {
       hasData: !!cache.processedData,
       ageInMinutes: cacheAge,
       isValid: isCacheValid()
+    },
+    testMode: {
+      enabled: TEST_MODE,
+      variant: TEST_MODE_VARIANT
     }
   };
-
-  // Add test mode info to response
-  (healthResponse as any).testMode = TEST_MODE;
-  (healthResponse as any).testModeVariant = TEST_MODE_VARIANT;
 
   res.json(healthResponse);
 });

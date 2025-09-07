@@ -1,6 +1,4 @@
-import { ProcessedApiResponse } from './types';
-
-export type TestScenario = 'tomorrow' | 'gap' | 'today';
+import { ProcessedApiResponse, TestScenario } from './types';
 
 /**
  * Generates mock test data for different scenarios:

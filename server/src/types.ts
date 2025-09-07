@@ -32,6 +32,10 @@ export interface HealthCheckResponse {
     ageInMinutes: number | null;
     isValid: boolean;
   };
+  testMode: {
+    enabled: boolean;
+    variant: TestScenario;
+  };
 }
 
 // Processed API response types
@@ -55,3 +59,5 @@ export interface ProcessedCollectionDate {
 export interface ProcessedApiResponse {
   collections: ProcessedCollectionDate[];
 }
+
+export type TestScenario = 'tomorrow' | 'gap' | 'today';
