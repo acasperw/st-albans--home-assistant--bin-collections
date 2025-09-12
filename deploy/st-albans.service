@@ -1,15 +1,24 @@
 [Unit]
 Description=St Albans Bin Collection App
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+User=zander
+Group=zander
 WorkingDirectory=/opt/st-albans/server
-EnvironmentFile=/opt/st-albans/server/.env
+# Ensure Node modules are available; adjust path if using nvm or custom install.
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/st-albans/server/.env
 ExecStart=/usr/bin/env node dist/server.js
-Restart=on-failure
+Restart=always
 RestartSec=5
-User=pi
+# Hardening (optional)
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
