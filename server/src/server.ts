@@ -8,6 +8,7 @@ import { generateTestData } from './test-data';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 const UPRN = process.env.UPRN;
 
 // Test mode configuration - set to true to return mock data
@@ -153,9 +154,11 @@ app.use((req, res, next) => {
   res.sendFile(indexPath, err => { if (err) next(); });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-  // Server listening on port ${PORT}
+app.listen(Number(PORT), HOST, () => {
+  console.log(`Server listening on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  if (!existsSync(activeClientDir)) {
+    console.log('Static Angular build not found (UI pages will 404 until built).');
+  }
 });
 
 // Graceful shutdown

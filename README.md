@@ -5,14 +5,19 @@ Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin
 On the Raspberry Pi (first time):
 ```
 sudo apt-get update
-sudo apt-get install -y curl chromium-browser git
+sudo apt-get install -y curl chromium-browser git gh
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
-Clone repo:
+Authenticate GitHub CLI (optional – needed only for private repos):
+```
+gh auth login -h github.com -p https -w
+```
+
+Clone repo (GitHub CLI):
 ```
 cd /opt
-sudo git clone https://github.com/acasperw/st-albans-recycling-refuse-collections st-albans
+sudo gh repo clone acasperw/st-albans-recycling-refuse-collections st-albans
 sudo chown -R pi:pi st-albans
 cd st-albans
 ```
@@ -48,7 +53,7 @@ journalctl -u st-albans -f
 SSH to Pi:
 ```
 cd /opt/st-albans
-git pull
+gh repo sync
 ./deploy/build-release.sh
 sudo systemctl restart st-albans
 ```
@@ -102,9 +107,22 @@ cd server && npm run build && node dist/server.js
 - Update UPRN: edit `server/.env`, restart service.
 - Logs: `journalctl -u st-albans -f`.
  - Quick restart + logs: `./deploy/restart-service.sh`
+- Cannot reach app after starting via SSH but works when started manually elsewhere:
+	1. Stop systemd service first: `sudo systemctl stop st-albans` (avoid port conflict).
+	2. Ensure build exists: `ls server/dist/server.js` and `ls client/dist/bin-collection-app/browser/index.html`.
+	3. Start manually from repo root: `cd server && node dist/server.js`.
+	4. If remote access from another machine fails, set `HOST=0.0.0.0` in `.env` (or it defaults now) and restart.
+	5. Check listener: `ss -tulpn | grep 3000`.
+	6. Curl locally: `curl -I http://localhost:3000/api/health`.
 
 ## Previous Packaging Approach
 Earlier tar/PowerShell packaging removed in favor of simpler on-device build (Pi 5 performance is sufficient). For deterministic immutable releases you could reintroduce an artifact build, but not required for rare updates.
+
+### Using plain git instead (fallback)
+If GitHub CLI isn't installed or you prefer raw git:
+```
+git pull
+```
 
 ## License
 MIT (if you intend to add one – currently unspecified).
