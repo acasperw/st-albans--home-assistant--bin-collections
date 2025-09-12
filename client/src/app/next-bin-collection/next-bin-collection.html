@@ -51,7 +51,7 @@
   <!-- Standard List Mode -->
   @if (!loading() && !errorMessage() && !showHero()) {
   <div class="collections-container">
-  @for (group of collectionDates(); track group.date) {
+    @for (group of collectionDates(); track group.date) {
     <div class="collection-group">
       <div class="group-header" [ngClass]="{'soon': group.isCollectionSoon}">
         <h2>{{ group.formattedDate }} {{group.isCollectionSoon ? '- Next collection' : ''}}</h2>
@@ -61,7 +61,7 @@
       </div>
 
       <div class="services-grid">
-  @for (service of group.services; track service.serviceType) {
+        @for (service of group.services; track service.serviceType) {
         <div class="service-card" [ngClass]="'bin-type-' + service.serviceType">
           <div class="service-header">
             @if (service.serviceType === 'food') {
@@ -71,15 +71,6 @@
               [customAriaLabel]="service.serviceName" />
             }
             <h3>{{ service.serviceName }}</h3>
-            <!-- <div class="service-details">
-              <div class="detail-row">
-                <span class="label">Last collection:</span>
-                <span class="value">{{ service.last | date:'EEE d MMM':'en-GB' }}</span>
-              </div>
-              <div class="schedule">
-                📅 {{ service.scheduleDescription }}
-              </div>
-            </div> -->
           </div>
         </div>
         }
