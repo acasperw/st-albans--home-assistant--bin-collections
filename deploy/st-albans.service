@@ -22,7 +22,6 @@ RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
-ProtectHome=true
 ProtectControlGroups=true
 ProtectHostname=true
 ProtectKernelTunables=true
