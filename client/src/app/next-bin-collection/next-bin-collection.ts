@@ -93,7 +93,7 @@ export class NextBinCollection implements OnInit {
   private updateNightMode(): void {
     const hour = new Date().getHours();
     const shouldBeNight = hour >= 19 || hour < 6;
-    this.nightMode.set(shouldBeNight);
+    this.nightMode.set(true);
   }
 
   private fetchCollectionDates(): void {
