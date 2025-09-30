@@ -34,9 +34,6 @@
   // Bin / caddy color tokens (day mode defaults)
   --bin-body-color: #2b2b2b;
   --bin-lid-color: #2b2b2b;
-  --bin-outline-color: transparent;
-  --bin-halo: transparent;
-  --bin-highlight: #ffffff10;
 }
 
 
@@ -365,8 +362,6 @@
   --color-surface-elevated: #161a1f; /* highest elevation */
   --bin-body-color: #343a40; /* lifted from pure black for contrast */
   --bin-lid-color: #3d454c; /* slight differentiation */
-  --bin-outline-color: #ffffff14;
-  --bin-halo: radial-gradient(circle at 50% 55%, #ffffff12, #0000 70%);
 
   .service-header h3 { color: #e5e9ed; }
 
@@ -391,7 +386,6 @@
     background: radial-gradient(circle at 50% 65%, #0d1216, #000 70%);
   }
 
-  .bin::before, .caddy::before { background: var(--bin-halo); }
 }
 
 .mode-toggle {
