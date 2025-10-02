@@ -2,8 +2,8 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import path from 'path';
-import { ApiResponse, CacheData, HealthCheckResponse, TestScenario } from './types';
-import { processApiResponse } from './data-processor';
+import { ApiResponse, CacheData, HealthCheckResponse, TestScenario, ProcessedApiResponse } from './types';
+import { processApiResponse, getDaysUntil } from './data-processor';
 import { generateTestData } from './test-data';
 
 // Configuration
@@ -80,6 +80,18 @@ async function fetchFreshData(uprn: string): Promise<CacheData> {
   return cache;
 }
 
+// NOTE: We intentionally recalculate relative fields (daysUntil) on every request instead of
+// storing them in the 24h cache. Only absolute collection datetimes are cached.
+// This prevents the UI from showing stale 'In X days' / 'Put out tonight!' messaging after midnight
+// without forcing an upstream API refresh.
+function withDynamicRelativeFields(processed: ProcessedApiResponse): ProcessedApiResponse {
+  return {
+    collections: processed.collections.map(c => ({
+      ...c, daysUntil: getDaysUntil(c.date)
+    })).sort((a, b) => a.date.localeCompare(b.date))
+  };
+}
+
 app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void> => {
   try {
     // If test mode is enabled, return mock data
@@ -102,14 +114,14 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
 
     // Check if we have valid cached data
     if (isCacheValid() && cache.processedData) {
-      // Serving cached processed bin collection data for UPRN: ${uprn}
-      res.json(cache.processedData);
+      // Serve cached absolute dates but recompute relative daysUntil now
+      res.json(withDynamicRelativeFields(cache.processedData));
       return;
     }
 
     // Fetch fresh data if cache is invalid or empty
     const tempCache = await fetchFreshData(uprn);
-    res.json(tempCache.processedData);
+    res.json(withDynamicRelativeFields(tempCache.processedData!));
 
   } catch (error) {
     console.error('Error fetching bin collection data:', error instanceof Error ? error.message : 'Unknown error');

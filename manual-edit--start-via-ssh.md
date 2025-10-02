@@ -11,3 +11,9 @@ chromium-browser --noerrdialogs --disable-session-crashed-bubble --disable-infob
 ```
 pkill -f 'chromium.*--kiosk'
 ```
+
+# Add emojis
+```
+sudo apt install -y fonts-noto-color-emoji
+sudo fc-cache -f -v
+```
