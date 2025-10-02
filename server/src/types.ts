@@ -61,3 +61,59 @@ export interface ProcessedApiResponse {
 }
 
 export type TestScenario = 'tomorrow' | 'gap' | 'today';
+
+// ----------------- Train Feature Types -----------------
+// Request parameters for next train lookup
+export interface TrainServiceRequest {
+  from: string; // CRS code e.g. 'SAA'
+  to: string;   // CRS code e.g. 'HWW'
+}
+
+// A calling point on the route (minimal for now)
+export interface TrainCallingPoint {
+  stationCode: string;
+  stationName?: string;
+  scheduled: string; // ISO datetime
+  estimated?: string; // ISO datetime or unchanged
+  platform?: string;
+}
+
+export type TrainStatus = 'ON_TIME' | 'DELAYED' | 'CANCELLED' | 'UNKNOWN';
+
+// Normalised train leg (single service)
+export interface TrainLeg {
+  serviceId: string;
+  origin: string;       // origin CRS
+  destination: string;  // destination CRS
+  aimedDeparture: string; // ISO datetime
+  aimedArrival: string;   // ISO datetime (if available)
+  expectedDeparture?: string; // ISO datetime
+  expectedArrival?: string;   // ISO datetime
+  platform?: string;
+  status: TrainStatus;
+  callingPoints?: TrainCallingPoint[];
+}
+
+// Response returned to client for next trains
+export interface NextTrainResponse {
+  generatedAt: string; // ISO datetime when server generated
+  from: string; // CRS code
+  to: string;   // CRS code
+  next: TrainLeg | null; // first upcoming
+  following?: TrainLeg[]; // optional list of following services (limited)
+  source: 'live' | 'cache' | 'mock' | 'stale';
+  staleSeconds?: number; // If served from stale cache in error scenario
+  error?: string; // Optional error message if partial failure
+}
+
+// Train cache entry
+export interface TrainCacheEntry {
+  key: string; // from-to
+  response: NextTrainResponse;
+  timestamp: number; // ms epoch
+  ttl: number; // ms
+}
+
+export interface TrainCache {
+  [key: string]: TrainCacheEntry | undefined;
+}

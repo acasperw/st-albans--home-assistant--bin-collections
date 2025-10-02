@@ -2,9 +2,10 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import path from 'path';
-import { ApiResponse, CacheData, HealthCheckResponse, TestScenario } from './types';
+import { ApiResponse, CacheData, HealthCheckResponse, TestScenario, NextTrainResponse } from './types';
 import { processApiResponse } from './data-processor';
 import { generateTestData } from './test-data';
+import { getNextTrain } from './train-service';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -119,6 +120,20 @@ app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void
     });
   }
 });
+
+// Next train endpoint (SAA -> HWW by default if not provided)
+app.get('/api/train/next', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const from = (req.query.from as string) || 'SAA';
+    const to = (req.query.to as string) || 'HWW';
+    const response: NextTrainResponse = await getNextTrain(from.toUpperCase(), to.toUpperCase());
+    res.json(response);
+  } catch (err) {
+    console.error('Error fetching train data', err);
+    res.status(500).json({ error: 'Failed to fetch train data' });
+  }
+});
+
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

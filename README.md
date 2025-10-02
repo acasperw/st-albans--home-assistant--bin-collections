@@ -1,5 +1,5 @@
 # st-albans-recycling-refuse-collections
-Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin collection info.
+Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin collection info – now also shows the next train from St Albans Abbey (SAA) to How Wood (HWW).
 
 ## Quick Start (Simplest Path – Build Directly on Pi)
 On the Raspberry Pi (first time). These steps install a current Node (NodeSource) *or* you can use `nvm` (see below). Using a system-wide Node simplifies the systemd service.
@@ -147,7 +147,33 @@ UPRN=YOUR_UPRN
 PORT=3000
 # TEST_MODE=true
 # TEST_MODE_VARIANT=tomorrow|weekend|empty|far
+# Train live data (TransportAPI) – if omitted or TEST_MODE=true, mock train data is served
+TRAIN_APP_ID=your_transportapi_app_id
+TRAIN_APP_KEY=your_transportapi_app_key
+# TRAIN_API_BASE=https://transportapi.com/v3/uk/train/station   # (default)
 ```
+
+### Train Endpoint
+The server exposes a new endpoint:
+```
+GET /api/train/next?from=SAA&to=HWW
+```
+Returns JSON of the shape:
+```
+{
+	"generatedAt": "2025-09-30T10:20:00.000Z",
+	"from": "SAA",
+	"to": "HWW",
+	"next": { "serviceId": "...", "aimedDeparture": "...", "expectedDeparture": "...", "status": "ON_TIME", ... },
+	"following": [ { ... }, ... ],
+	"source": "live|cache|mock|stale",
+	"staleSeconds": 42,      // only when source = stale
+	"error": "...optional"  // if fallback or partial failure
+}
+```
+Caching: 60s live cache; if upstream fails a stale copy up to 5 minutes old may be returned with `source = "stale"`.
+
+Mock Data: Provided automatically when either `TEST_MODE=true` or train credentials are not set.
 
 ## What The Build Script Does
 `./deploy/build-release.sh`:

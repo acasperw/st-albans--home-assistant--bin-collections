@@ -1,0 +1,44 @@
+<section class="next-train" *ngIf="!loading(); else loadingTpl">
+  <h2>Next Train ({{ from() }} → {{ to() }})</h2>
+  <ng-container *ngIf="!error(); else errorTpl">
+    <div *ngIf="nextTrain(); else noDataTpl" class="primary-train" [class.stale]="data()?.source === 'stale'">
+      <div class="times">
+        <div class="aimed">Dep {{ formatTime(nextTrain()?.aimedDeparture) }}</div>
+        <div class="expected" *ngIf="nextTrain()?.expectedDeparture && nextTrain()?.expectedDeparture !== nextTrain()?.aimedDeparture">
+          Exp {{ formatTime(nextTrain()?.expectedDeparture) }}
+        </div>
+      </div>
+      <div class="meta">
+        <span class="countdown">{{ countdown() }}</span>
+        <span class="platform" *ngIf="nextTrain()?.platform">Plat {{ nextTrain()?.platform }}</span>
+        <span class="status" [class]="'status ' + statusClass(nextTrain()?.status)">{{ nextTrain()?.status || 'UNKNOWN' }}</span>
+      </div>
+      <div class="arrival">Arr {{ formatTime(nextTrain()?.expectedArrival || nextTrain()?.aimedArrival) }}</div>
+      <div class="source" *ngIf="data()?.source !== 'live'">Source: {{ data()?.source }}</div>
+      <div class="warning" *ngIf="data()?.error">{{ data()?.error }}</div>
+    </div>
+
+    <div class="following" *ngIf="following().length > 0">
+      <h3>Following</h3>
+      <ul>
+        <li *ngFor="let f of following()">
+          <span class="time">{{ formatTime(f.aimedDeparture) }}</span>
+          <span class="status" [class]="'status ' + statusClass(f.status)">{{ f.status }}</span>
+          <span class="plat" *ngIf="f.platform">P{{ f.platform }}</span>
+        </li>
+      </ul>
+    </div>
+  </ng-container>
+</section>
+
+<ng-template #loadingTpl>
+  <div class="loading">Loading train data…</div>
+</ng-template>
+
+<ng-template #errorTpl>
+  <div class="error">{{ error() }}</div>
+</ng-template>
+
+<ng-template #noDataTpl>
+  <div class="no-data">No upcoming services found</div>
+</ng-template>

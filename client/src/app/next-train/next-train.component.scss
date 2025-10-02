@@ -1,0 +1,108 @@
+.next-train {
+  font-family: system-ui, Arial, sans-serif;
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+  }
+  .primary-train {
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.25rem 0.75rem;
+    background: #181818;
+    color: #eee;
+    &.stale {
+      opacity: 0.8;
+      box-shadow: 0 0 0 2px #ffa60055;
+    }
+    .times {
+      font-size: 1.4rem;
+      .expected {
+        color: #ffcf33;
+        font-size: 0.85rem;
+      }
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      .countdown {
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+      .platform {
+        background: #333;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+      }
+      .status {
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        &.on-time { background: #1d4d1d; color: #bdf3bd; }
+        &.delayed { background: #664400; color: #ffd280; }
+        &.cancelled { background: #5b0d0d; color: #ffaaaa; }
+        &.unknown { background: #333; color: #ccc; }
+      }
+    }
+    .arrival {
+      grid-column: 1 / -1;
+      font-size: 0.85rem;
+      color: #bbb;
+    }
+    .source {
+      grid-column: 1 / -1;
+      font-size: 0.6rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .warning {
+      grid-column: 1 / -1;
+      font-size: 0.7rem;
+      color: #ffcf33;
+    }
+  }
+  .following {
+    margin-top: 1rem;
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      color: #ccc;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.35rem;
+      li {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        font-size: 0.75rem;
+        background: #222;
+        padding: 0.35rem 0.5rem;
+        border-radius: 4px;
+        .status {
+          padding: 0.1rem 0.4rem;
+          border-radius: 3px;
+          &.on-time { background: #154815; color: #bdf3bd; }
+          &.delayed { background: #664400; color: #ffd280; }
+          &.cancelled { background: #5b0d0d; color: #ffaaaa; }
+          &.unknown { background: #333; color: #ccc; }
+        }
+      }
+    }
+  }
+  .loading, .error, .no-data {
+    padding: 1rem;
+    text-align: center;
+  }
+  .error { color: #ff8888; }
+}
