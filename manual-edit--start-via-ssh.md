@@ -17,3 +17,8 @@ pkill -f 'chromium.*--kiosk'
 sudo apt install -y fonts-noto-color-emoji
 sudo fc-cache -f -v
 ```
+
+## Change Brightness 0 - 31
+```
+echo 15 | sudo tee /sys/class/backlight/11-0045/brightness
+```
