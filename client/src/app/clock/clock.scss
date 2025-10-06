@@ -1,0 +1,51 @@
+// Fullscreen clock overlay for idle mode
+
+// Fade animation: hidden by default, shown when .active class present
+.clock-overlay {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: radial-gradient(circle at 30% 30%, #0b0f14 0%, #020304 70%);
+	z-index: 9999;
+	pointer-events: none; // Allow underlying interactions to immediately hide clock
+	color: #e8f4ff;
+	opacity: 0;
+	transition: opacity .5s ease;
+}
+
+.clock-overlay.active { opacity: 1; }
+
+.clock-face {
+	font-size: clamp(4rem, 20vw, 18rem);
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-shadow:
+		0 0 6px rgba(0,160,255,0.4),
+		0 0 22px rgba(0,120,255,0.25),
+		0 0 48px rgba(0,120,255,0.15);
+	user-select: none;
+	display: flex;
+	align-items: flex-start;
+	line-height: 1;
+	font-variant-numeric: tabular-nums; // ensure uniform digit widths
+	font-feature-settings: 'tnum'; // fallback for some browsers
+}
+
+.time-main { line-height: 1; }
+
+.time-seconds {
+	font-size: 25%;
+	align-self: flex-start;
+	opacity: 0.85;
+	font-weight: 500;
+	display: inline-block;
+	width: 2ch; // reserve fixed width for two digits
+	text-align: center;
+	transform: translateY(12%);
+}
+
+@media (max-width: 600px) {
+	.clock-face { font-size: clamp(3rem, 24vw, 8rem); }
+}
