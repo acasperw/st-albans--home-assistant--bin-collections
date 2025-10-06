@@ -113,13 +113,6 @@ If you want it to start without an active login:
 loginctl enable-linger $USER
 ```
 
-### C. (Legacy) LXDE autostart file
-Only if `echo $DESKTOP_SESSION` reports `LXDE-pi`:
-Append the lines in `deploy/pi-kiosk-autostart.txt` to:
-```
-~/.config/lxsession/LXDE-pi/autostart
-```
-
 ### Optional: Wait for backend before launching
 Create `~/bin/kiosk-wrapper.sh`:
 ```bash
