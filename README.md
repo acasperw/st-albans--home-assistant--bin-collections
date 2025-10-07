@@ -72,7 +72,7 @@ Just ensure you committed & pushed changes first.
 ## Kiosk Mode (Chromium Autostart)
 Recent Raspberry Pi OS images may use Wayland (`labwc:wlroots`) instead of LXDE. Use one of the following methods:
 
-### A. XDG Autostart (.desktop file) – works on Wayland & LXDE
+<!-- ### A. XDG Autostart (.desktop file) – works on Wayland & LXDE
 ```bash
 mkdir -p ~/.config/autostart
 cat > ~/.config/autostart/chromium-kiosk.desktop <<'EOF'
@@ -83,7 +83,7 @@ Exec=chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bu
 X-GNOME-Autostart-enabled=true
 EOF
 ```
-Log out/in (or reboot). Chromium should appear full screen.
+Log out/in (or reboot). Chromium should appear full screen. -->
 
 ### B. User systemd service (robust, logged)
 ```bash
@@ -159,6 +159,59 @@ Integrated (simulate prod):
 cd client && npm run build
 cd server && npm run build && node dist/server.js
 ```
+
+## Automatic Screen Brightness (Day/Night via systemd)
+If your display exposes `/sys/class/backlight/11-0045/brightness` (range 0–31), you can automatically dim at night and brighten in the morning using systemd timers provided in `deploy/`.
+
+Included unit files:
+
+* `brightness-set@.service` – parameterized oneshot to set a validated brightness (instance = value 0–31).
+* `brightness-day.timer` – runs daily 07:30 → sets 20.
+* `brightness-night.timer` – runs daily 22:00 → sets 2.
+* `brightness-initial.service` (optional) – sets night value (2) early in boot so overnight reboots aren’t blinding.
+
+### Install
+```bash
+sudo cp deploy/brightness-set@.service /etc/systemd/system/
+sudo cp deploy/brightness-day.timer /etc/systemd/system/
+sudo cp deploy/brightness-night.timer /etc/systemd/system/
+sudo cp deploy/brightness-initial.service /etc/systemd/system/   # optional
+sudo systemctl daemon-reload
+sudo systemctl enable --now brightness-day.timer
+sudo systemctl enable --now brightness-night.timer
+sudo systemctl enable brightness-initial.service  # if used
+```
+
+### Verify
+```bash
+# Show timers
+systemctl list-timers --all | grep brightness
+
+# Manually trigger (set to 20 now)
+sudo systemctl start brightness-set@20.service
+
+# Check logs
+journalctl -u brightness-set@20.service -u brightness-set@2.service -n 20 --no-pager
+
+# Current raw value
+cat /sys/class/backlight/11-0045/brightness
+```
+
+### Customize
+* Change times: edit `OnCalendar=` in the `*.timer` files; then `sudo systemctl daemon-reload && sudo systemctl restart brightness-day.timer brightness-night.timer`.
+* Change levels: edit the `Unit=` target in each timer (`brightness-set@25.service`, etc.).
+* Test arbitrary level: `sudo systemctl start brightness-set@5.service`.
+* Range guard: values outside 0–31 cause the service to exit with code 2 (logged).
+
+### Remove
+```bash
+sudo systemctl disable --now brightness-day.timer brightness-night.timer
+sudo systemctl disable brightness-initial.service
+sudo rm /etc/systemd/system/brightness-{day.timer,night.timer,initial.service} /etc/systemd/system/brightness-set@.service
+sudo systemctl daemon-reload
+```
+
+If your hardware uses a different backlight path, change `BACKLIGHT_PATH` inside the service files before copying.
 
 ## Troubleshooting
 - Blank screen: ensure service running (`systemctl status st-albans`).

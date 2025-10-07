@@ -1,0 +1,24 @@
+[Unit]
+Description=Set kiosk backlight initial low brightness (night value) early in boot
+DefaultDependencies=no
+After=local-fs.target
+Before=multi-user.target graphical.target
+
+[Service]
+Type=oneshot
+Environment=BACKLIGHT_PATH=/sys/class/backlight/11-0045/brightness
+ExecStart=/bin/bash -c 'echo 2 > "$BACKLIGHT_PATH"'
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+PrivateTmp=yes
+LockPersonality=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+ReadWritePaths=/sys/class/backlight/11-0045/brightness
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Set kiosk backlight to night brightness (2) at 22:00 daily
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=*-*-* 22:00:00
+Persistent=yes
+Unit=brightness-set@2.service
+
+[Install]
+WantedBy=timers.target

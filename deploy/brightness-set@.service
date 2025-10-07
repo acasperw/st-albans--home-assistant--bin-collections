@@ -1,0 +1,26 @@
+[Unit]
+Description=Set kiosk backlight brightness to %i
+Documentation=man:systemd.unit(5)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+# Adjust BACKLIGHT_PATH if hardware changes
+Environment=BACKLIGHT_PATH=/sys/class/backlight/11-0045/brightness
+# %i is the instance (brightness integer 0-31). Basic validation (digits only)
+ExecStart=/bin/bash -c '[[ "%i" =~ ^([0-9]|[12][0-9]|3[01])$ ]] || { echo "Invalid brightness %i" >&2; exit 2; }; echo %i > "$BACKLIGHT_PATH"'
+
+# Hardening (oneshot, minimal privileges assumed when run as root)
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+PrivateTmp=yes
+LockPersonality=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+ReadWritePaths=/sys/class/backlight/11-0045/brightness
+
+[Install]
+# Not enabled directly; timers or other units call instances
+WantedBy=multi-user.target
