@@ -15,16 +15,18 @@
 	transition: opacity .5s ease;
 }
 
-.clock-overlay.active { opacity: 1; }
+.clock-overlay.active {
+	opacity: 1;
+}
 
 .clock-face {
 	font-size: clamp(4rem, 20vw, 18rem);
 	font-weight: 600;
 	letter-spacing: 0.05em;
 	text-shadow:
-		0 0 6px rgba(0,160,255,0.4),
-		0 0 22px rgba(0,120,255,0.25),
-		0 0 48px rgba(0,120,255,0.15);
+		0 0 6px rgba(0, 160, 255, 0.4),
+		0 0 22px rgba(0, 120, 255, 0.25),
+		0 0 48px rgba(0, 120, 255, 0.15);
 	user-select: none;
 	display: flex;
 	align-items: flex-start;
@@ -33,7 +35,9 @@
 	font-feature-settings: 'tnum'; // fallback for some browsers
 }
 
-.time-main { line-height: 1; }
+.time-main {
+	line-height: 1;
+}
 
 .time-seconds {
 	font-size: 25%;
@@ -47,5 +51,7 @@
 }
 
 @media (max-width: 600px) {
-	.clock-face { font-size: clamp(3rem, 24vw, 8rem); }
+	.clock-face {
+		font-size: clamp(3rem, 24vw, 8rem);
+	}
 }

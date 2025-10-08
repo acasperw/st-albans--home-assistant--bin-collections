@@ -1,4 +1,5 @@
 <div class="clock-overlay" [class.active]="active()" aria-hidden="true">
+	<app-weather-badge [active]="active()" />
 	<div class="clock-face">
 		<span class="time-main">{{ time() }}</span>
 		<span class="time-seconds">{{ seconds() }}</span>

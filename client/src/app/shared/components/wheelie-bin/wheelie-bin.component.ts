@@ -17,7 +17,6 @@ export type WheeliBinType = 'brown' | 'black' | 'blue' | 'green' | 'black-body-b
 
 @Component({
   selector: 'app-wheelie-bin',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <div class="bin-container">

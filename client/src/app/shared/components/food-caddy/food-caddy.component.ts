@@ -17,7 +17,6 @@ export type FoodCaddyType = 'green' | 'black-body-green-lid';
 
 @Component({
   selector: 'app-food-caddy',
-  standalone: true,
   imports: [CommonModule],
   template: `
     <div class="caddy-container">

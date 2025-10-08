@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, signal, computed, input } from '@angular/core';
+import { WeatherBadgeComponent } from '../shared/components/weather-badge/weather-badge.component';
 
 @Component({
   selector: 'app-clock',
-  standalone: true,
-  imports: [],
+  imports: [WeatherBadgeComponent],
   templateUrl: './clock.html',
   styleUrl: './clock.scss'
 })
@@ -43,4 +43,5 @@ export class Clock implements OnInit, OnDestroy {
       this.secondTimer = setInterval(() => this.now.set(new Date()), 1000);
     }, 1000 - ms);
   }
+
 }
