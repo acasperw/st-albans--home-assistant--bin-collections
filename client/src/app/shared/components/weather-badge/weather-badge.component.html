@@ -3,8 +3,7 @@
   <span class="icon" aria-hidden="true">{{ weatherIcon() }}</span>
   <div class="rotate" aria-hidden="true">
     <span class="item state-0" [class.active]="weatherStateIndex() === 0">{{ temperatureC() }}°C</span>
-    <span class="item state-1" [class.active]="weatherStateIndex() === 1">{{ weatherLabel() }}</span>
-    <span class="item state-2" [class.active]="weatherStateIndex() === 2">{{ rainChanceText() }}</span>
+    <span class="item state-1" [class.active]="weatherStateIndex() === 1">{{ rainChanceText() }}</span>
   </div>
 </div>
 }

@@ -25,19 +25,17 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   // Rotation
   private rotateTimer: any;
   public weatherStateIndex = signal(0);
-  private readonly totalStates = 3;
+  private readonly totalStates = 2;
 
   public weatherIcon = computed(() => this.mapWeatherIcon(this.weatherCode()));
   public weatherLabel = computed(() => this.mapWeatherLabel(this.weatherCode()));
 
   public rainChanceText = computed(() => {
     const p = this.precipProb();
-    if (p == null) return '';
-    if (p === 0) return 'No rain expected';
-    if (p <= 20) return `Rain unlikely (${p}%)`;
+    if (p == null || p < 20) return '';
     if (p <= 50) return `Rain chance ${p}%`;
     if (p <= 80) return `Rain likely (${p}%)`;
-    return `Rain very likely (${p}%)`;
+    return `Rain very likely: ${p}%`;
   });
 
   ngOnInit(): void {
@@ -53,7 +51,14 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   private startRotation() {
     this.rotateTimer = setInterval(() => {
       if (this.active() && this.hasWeather()) {
-        this.weatherStateIndex.update(i => (i + 1) % this.totalStates);
+        // Only rotate if we have rain text to show (state 1)
+        const hasRain = this.rainChanceText() !== '';
+        if (hasRain) {
+          this.weatherStateIndex.update(i => (i + 1) % this.totalStates);
+        } else {
+          // Stay on temperature (state 0) if no rain info
+          this.weatherStateIndex.set(0);
+        }
       }
     }, 4000);
   }
