@@ -1,0 +1,171 @@
+<div class="food-inventory">
+  <header class="inventory-header">
+    <div class="header-left">
+      <button class="back-btn" (click)="navigateBack()">← Bins</button>
+      <h1>Food Inventory</h1>
+    </div>
+    <button class="add-btn" (click)="openAddForm()" [disabled]="loading()">
+      + Add Item
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="loading">
+      <p>Loading inventory...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error">
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Expiring Soon Section -->
+  @if (expiringSoon().length > 0) {
+    <section class="expiring-soon">
+      <h2>⚠️ Expiring Soon</h2>
+      <div class="item-grid">
+        @for (item of expiringSoon(); track item.id) {
+          <div class="food-item" [class]="getExpiryClass(item.expiry)">
+            <div class="item-header">
+              <h3>{{ item.name }}</h3>
+              <span class="quantity">x{{ item.quantity }}</span>
+            </div>
+            <div class="item-details">
+              @if (item.barcode) {
+                <small class="barcode">{{ item.barcode }}</small>
+              }
+              <div class="expiry">{{ getExpiryText(item.expiry) }}</div>
+            </div>
+            <div class="item-actions">
+              <button class="used-btn" (click)="markAsUsed(item)">Used</button>
+              <button class="extend-btn" (click)="extendExpiry(item)">+1 Day</button>
+              <button class="discard-btn" (click)="markAsDiscarded(item)">Discard</button>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- All Items Section -->
+  <section class="all-items">
+    <h2>All Items ({{ items().length }})</h2>
+    @if (items().length === 0) {
+      <div class="empty-state">
+        <p>No items in inventory</p>
+        <p>Try scanning a barcode or adding an item manually</p>
+      </div>
+    } @else {
+      <div class="item-list">
+        @for (item of items(); track item.id) {
+          <div class="food-item-row" [class]="getExpiryClass(item.expiry)">
+            <div class="item-info">
+              <div class="name">{{ item.name }}</div>
+              <div class="details">
+                @if (item.barcode) {
+                  <span class="barcode">{{ item.barcode }}</span>
+                }
+                @if (item.category) {
+                  <span class="category">{{ item.category }}</span>
+                }
+                <span class="quantity">Qty: {{ item.quantity }}</span>
+              </div>
+            </div>
+            <div class="expiry-info">
+              <div class="expiry-text">{{ getExpiryText(item.expiry) }}</div>
+              <div class="expiry-date">{{ item.expiry }}</div>
+            </div>
+            <div class="item-actions">
+              <button class="action-btn used" (click)="markAsUsed(item)">✓</button>
+              <button class="action-btn extend" (click)="extendExpiry(item)">+1</button>
+              <button class="action-btn discard" (click)="markAsDiscarded(item)">✗</button>
+              <button class="action-btn delete" (click)="deleteItem(item)">🗑</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Add Item Modal -->
+  @if (showAddForm()) {
+    <div class="modal-overlay" (click)="closeAddForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Add Food Item</h2>
+          <button class="close-btn" (click)="closeAddForm()">×</button>
+        </div>
+        
+        <form class="add-form" (ngSubmit)="submitAddForm()">
+          @if (newItem().barcode) {
+            <div class="form-group">
+              <label>Barcode (scanned)</label>
+              <input type="text" [value]="newItem().barcode" readonly class="readonly">
+            </div>
+          }
+          
+          <div class="form-group">
+            <label for="name">Name *</label>
+            <input 
+              type="text" 
+              id="name"
+              [value]="newItem().name || ''"
+              (input)="updateFormField('name', $event.target.value)"
+              placeholder="e.g. Milk, Bread, Apples"
+              required>
+          </div>
+          
+          <div class="form-group">
+            <label for="category">Category</label>
+            <input 
+              type="text" 
+              id="category"
+              [value]="newItem().category || ''"
+              (input)="updateFormField('category', $event.target.value)"
+              placeholder="e.g. Dairy, Bakery, Fruit">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expiry">Expiry Date *</label>
+              <input 
+                type="date" 
+                id="expiry"
+                [value]="newItem().expiry || ''"
+                (input)="updateFormField('expiry', $event.target.value)"
+                required>
+            </div>
+            
+            <div class="form-group">
+              <label for="quantity">Quantity</label>
+              <input 
+                type="number" 
+                id="quantity"
+                [value]="newItem().quantity || 1"
+                (input)="updateFormField('quantity', +$event.target.value)"
+                min="1"
+                max="99">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="notes">Notes</label>
+            <input 
+              type="text" 
+              id="notes"
+              [value]="newItem().notes || ''"
+              (input)="updateFormField('notes', $event.target.value)"
+              placeholder="Optional notes">
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" (click)="closeAddForm()">Cancel</button>
+            <button type="submit" class="submit-btn">Add Item</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

@@ -1,4 +1,10 @@
 <div class="container" [class.night-mode]="nightMode()">
+  <!-- Navigation -->
+  <nav class="top-nav">
+    <button class="nav-btn food-btn" (click)="navigateToFood()">
+      🍎 Food Inventory
+    </button>
+  </nav>
   <!-- <button class="mode-toggle" type="button" (click)="toggleNightMode()" [attr.aria-pressed]="nightMode()"
     aria-label="Toggle night mode">
     <span aria-hidden="true">{{ nightMode() ? '🌙' : '☀️' }}</span>

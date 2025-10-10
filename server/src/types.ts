@@ -61,3 +61,34 @@ export interface ProcessedApiResponse {
 }
 
 export type TestScenario = 'tomorrow' | 'gap' | 'today';
+
+// Food inventory types
+export interface FoodItem {
+  id: string;
+  barcode?: string;
+  name: string;
+  category?: string;
+  addedAt: string; // ISO date
+  expiry: string; // ISO date (YYYY-MM-DD)
+  quantity: number;
+  status: 'active' | 'used' | 'discarded' | 'expired';
+  notes?: string;
+  source: 'scan' | 'manual';
+}
+
+export interface AddFoodItemRequest {
+  barcode?: string;
+  name: string;
+  category?: string;
+  expiry: string;
+  quantity?: number;
+  notes?: string;
+  source: 'scan' | 'manual';
+}
+
+export interface UpdateFoodItemRequest {
+  status?: 'active' | 'used' | 'discarded' | 'expired';
+  quantity?: number;
+  expiry?: string;
+  notes?: string;
+}

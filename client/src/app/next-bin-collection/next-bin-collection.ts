@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal, OnInit, DestroyRef, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { ProcessedApiResponse, EnhancedCollectionDate, EnhancedProcessedService } from './models';
 import { CommonModule } from '@angular/common';
@@ -21,6 +22,7 @@ export class NextBinCollection implements OnInit {
 
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
 
   public loading = signal(true);
   public collectionDates = signal<EnhancedCollectionDate[]>([]);
@@ -168,6 +170,10 @@ export class NextBinCollection implements OnInit {
 
   private isCollectionSoon(daysUntil: number): boolean {
     return daysUntil >= 0 && daysUntil <= 2;
+  }
+
+  public navigateToFood(): void {
+    this.router.navigate(['/food']);
   }
 
 }
