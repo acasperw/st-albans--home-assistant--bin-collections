@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import path from 'path';
-import { ApiResponse, CacheData, HealthCheckResponse, TestScenario, ProcessedApiResponse } from './types';
+import { ApiResponse, CacheData, HealthCheckResponse, TestScenario, ProcessedApiResponse, FoodItem, AddFoodItemRequest, UpdateFoodItemRequest } from './types';
 import { processApiResponse, getDaysUntil } from './data-processor';
 import { generateTestData } from './test-data';
 
@@ -23,6 +23,9 @@ const cache: CacheData = {
   TTL: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 };
 
+// In-memory food inventory storage (replace with file/database later)
+let foodInventory: FoodItem[] = [];
+
 const app = express();
 
 // Using CommonJS compilation; __dirname available after build.
@@ -39,7 +42,7 @@ if (existsSync(activeClientDir)) {
 // Enable CORS for API routes during development
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
@@ -152,6 +155,94 @@ app.get('/api/health', (req: Request, res: Response) => {
   };
 
   res.json(healthResponse);
+});
+
+// Food inventory API endpoints
+app.get('/api/food-inventory', (req: Request, res: Response) => {
+  // Return active items sorted by expiry date
+  const activeItems = foodInventory
+    .filter(item => item.status === 'active')
+    .sort((a, b) => a.expiry.localeCompare(b.expiry));
+  
+  res.json(activeItems);
+});
+
+app.post('/api/food-inventory', (req: Request, res: Response) => {
+  try {
+    const itemData: AddFoodItemRequest = req.body;
+    
+    if (!itemData.name || !itemData.expiry) {
+      res.status(400).json({ error: 'Name and expiry date are required' });
+      return;
+    }
+
+    const newItem: FoodItem = {
+      id: `food_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: itemData.name,
+      addedAt: new Date().toISOString(),
+      expiry: itemData.expiry,
+      quantity: itemData.quantity || 1,
+      status: 'active',
+      source: itemData.source || 'manual'
+    };
+
+    // Add optional properties only if they exist
+    if (itemData.barcode) newItem.barcode = itemData.barcode;
+    if (itemData.category) newItem.category = itemData.category;
+    if (itemData.notes) newItem.notes = itemData.notes;
+
+    foodInventory.push(newItem);
+    res.status(201).json(newItem);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add food item' });
+  }
+});
+
+app.put('/api/food-inventory/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates: UpdateFoodItemRequest = req.body;
+    
+    const itemIndex = foodInventory.findIndex(item => item.id === id);
+    if (itemIndex === -1) {
+      res.status(404).json({ error: 'Food item not found' });
+      return;
+    }
+
+    // Update the item
+    const item = foodInventory[itemIndex];
+    if (!item) {
+      res.status(404).json({ error: 'Food item not found' });
+      return;
+    }
+
+    if (updates.status !== undefined) item.status = updates.status;
+    if (updates.quantity !== undefined) item.quantity = updates.quantity;
+    if (updates.expiry !== undefined) item.expiry = updates.expiry;
+    if (updates.notes !== undefined) item.notes = updates.notes;
+
+    foodInventory[itemIndex] = item;
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update food item' });
+  }
+});
+
+app.delete('/api/food-inventory/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const itemIndex = foodInventory.findIndex(item => item.id === id);
+    
+    if (itemIndex === -1) {
+      res.status(404).json({ error: 'Food item not found' });
+      return;
+    }
+
+    foodInventory.splice(itemIndex, 1);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete food item' });
+  }
 });
 
 // (Simplified) No late-mount logic; rebuild before starting server if missing.
