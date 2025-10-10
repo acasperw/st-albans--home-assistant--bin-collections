@@ -86,7 +86,15 @@ export function generateTestData(scenario: TestScenario = 'tomorrow'): Processed
               last: addDays(-11).toISOString(),
               next: inThree.toISOString(),
               scheduleDescription: 'Fortnightly Collection'
-            }
+            },
+             {
+              serviceName: 'Food Waste',
+              serviceType: 'food',
+              taskType: 'Collection',
+              last: addDays(-11).toISOString(),
+              next: inThree.toISOString(),
+              scheduleDescription: 'Weekly Collection'
+            },
           ]
         },
         {

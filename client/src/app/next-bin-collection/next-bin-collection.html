@@ -19,64 +19,48 @@
   </div>
   }
 
-  <!-- Hero Full Screen Mode -->
-  @if (!loading() && !errorMessage() && showHero() && summaryCollection()) {
-  <section class="hero" role="region" aria-labelledby="hero-heading">
+  <!-- Main Collection Display -->
+  @if (!loading() && !errorMessage() && summaryCollection()) {
+  <section class="hero" [class.compact]="!isUpcoming()" role="region" aria-labelledby="hero-heading">
     <div class="hero-inner">
       <header class="hero-header">
         <h1 id="hero-heading">{{ summaryHeadline() }}</h1>
         <div class="hero-date">{{ summaryCollection().formattedDate }}</div>
       </header>
-      <div class="hero-bins">
+      <div class="hero-bins" [class.compact]="!isUpcoming()">
         @for (svc of summaryCollection().services; track svc.serviceType) {
         @if (svc.serviceType === 'food') {
         <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
-          <app-food-caddy caddyType="green" [icon]="svc.binIcon" [customAriaLabel]="svc.serviceName" />
+          <app-food-caddy 
+            caddyType="green" 
+            [icon]="svc.binIcon" 
+            [customAriaLabel]="svc.serviceName"
+            [class.compact]="!isUpcoming()" />
           <div class="hero-bin-label">{{ svc.serviceName }}</div>
         </div>
         } @else {
         <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
-          <app-wheelie-bin [binType]="getBinType(svc.serviceType)" [icon]="svc.binIcon"
-            [customAriaLabel]="svc.serviceName" />
+          <app-wheelie-bin 
+            [binType]="getBinType(svc.serviceType)" 
+            [icon]="svc.binIcon"
+            [customAriaLabel]="svc.serviceName"
+            [class.compact]="!isUpcoming()" />
           <div class="hero-bin-label">{{ svc.serviceName }}</div>
         </div>
         }
         }
       </div>
-
-    </div>
-  </section>
-  }
-
-  <!-- Standard List Mode -->
-  @if (!loading() && !errorMessage() && !showHero()) {
-  <div class="collections-container">
-    @for (group of collectionDates(); track group.date) {
-    <div class="collection-group">
-      <div class="group-header" [ngClass]="{'soon': group.isCollectionSoon}">
-        <h2>{{ group.formattedDate }} {{group.isCollectionSoon ? '- Next collection' : ''}}</h2>
-        <span class="days-badge" [ngClass]="{'soon': group.isCollectionSoon}">
-          {{ group.daysUntilText }}
-        </span>
-      </div>
-
-      <div class="services-grid">
-        @for (service of group.services; track service.serviceType) {
-        <div class="service-card" [ngClass]="'bin-type-' + service.serviceType">
-          <div class="service-header">
-            @if (service.serviceType === 'food') {
-            <app-food-caddy caddyType="green" [icon]="service.binIcon" [customAriaLabel]="service.serviceName" />
-            } @else {
-            <app-wheelie-bin [binType]="getBinType(service.serviceType)" [icon]="service.binIcon"
-              [customAriaLabel]="service.serviceName" />
-            }
-            <h3>{{ service.serviceName }}</h3>
-          </div>
+      @if (!isUpcoming()) {
+      <div class="next-collection-footer">
+        @if (collectionAfterNext()) {
+        <div class="collection-after-next">
+          <div class="after-next-text">Collection after that</div>
+          <div class="after-next-date">{{ collectionAfterNext()!.formattedDate }}</div>
         </div>
         }
       </div>
+      }
     </div>
-    }
-  </div>
+  </section>
   }
 </div>

@@ -27,10 +27,6 @@ export class NextBinCollection implements OnInit {
   public errorMessage = signal<string | null>(null);
   public nightMode = signal(false);
 
-  // Track helpers for template to avoid inline lambdas
-  public trackCollection = (_: number, c: EnhancedCollectionDate) => c.date;
-  public trackService = (_: number, s: EnhancedProcessedService) => s.serviceType;
-
   // Find collection objects by relative day
   public todayCollection = computed(() => this.collectionDates().find(c => c.daysUntil === 0));
   public tomorrowCollection = computed(() => this.collectionDates().find(c => c.daysUntil === 1));
@@ -42,10 +38,9 @@ export class NextBinCollection implements OnInit {
       .sort((a, b) => a.daysUntil - b.daysUntil)[0];
   });
 
-  // Determine which collection to highlight for the summary banner
+  // Always show the next upcoming collection
   public summaryCollection = computed(() => {
-    // Prefer tomorrow (explicit user request), else today (if active), else next upcoming
-    return this.tomorrowCollection() || this.todayCollection() || this.nextUpcomingCollection() || null;
+    return this.nextUpcomingCollection() || null;
   });
 
   // Headline answering: What bins do I put out tomorrow?
@@ -55,19 +50,21 @@ export class NextBinCollection implements OnInit {
     if (col === this.tomorrowCollection()) return 'Put out tonight!';
     if (col === this.todayCollection()) return 'Today\'s collection';
     // Otherwise it's a future collection beyond tomorrow
-    if (col.daysUntil === 2) return 'In 2 days:';
-    return `In ${col.daysUntil} days (${this.formatDate(col.date)}):`;
+    return 'Next collection';
   });
 
-  // Short text list of service names for screen readers / alt text
-  public summaryServicesText = computed(() => {
-    const col = this.summaryCollection();
-    if (!col) return '';
-    return col.services.map(s => s.serviceName).join(', ');
-  });
+  // Check if this is today or tomorrow (for larger icons)
+  public isUpcoming = computed(() => !!(this.todayCollection() || this.tomorrowCollection()));
 
-  // Decide if we should show a full-screen hero (today or tomorrow collections)
-  public showHero = computed(() => !!(this.todayCollection() || this.tomorrowCollection()));
+  // Get the collection after the next one (for showing future date at bottom)
+  public collectionAfterNext = computed(() => {
+    const next = this.summaryCollection();
+    if (!next) return null;
+    
+    return this.collectionDates()
+      .filter(c => c.daysUntil > next.daysUntil)
+      .sort((a, b) => a.daysUntil - b.daysUntil)[0] || null;
+  });
 
   ngOnInit(): void {
     this.updateNightMode();
@@ -84,10 +81,6 @@ export class NextBinCollection implements OnInit {
     interval(10 * 60 * 1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateNightMode());
-  }
-
-  public toggleNightMode(): void {
-    this.nightMode.update(v => !v);
   }
 
   private updateNightMode(): void {
@@ -118,8 +111,6 @@ export class NextBinCollection implements OnInit {
       date: collection.date,
       daysUntil: collection.daysUntil,
       formattedDate: this.formatDate(collection.date),
-      daysUntilText: this.getDaysUntilText(collection.daysUntil),
-      isCollectionSoon: this.isCollectionSoon(collection.daysUntil),
       services: collection.services.map(service => ({
         ...service,
         binIcon: this.getBinIcon(service.serviceType)
@@ -157,17 +148,6 @@ export class NextBinCollection implements OnInit {
       month: 'short'
     };
     return date.toLocaleDateString('en-GB', options);
-  }
-
-  private getDaysUntilText(daysUntil: number): string {
-    if (daysUntil === 0) return 'Today!';
-    if (daysUntil === 1) return 'Tomorrow';
-    if (daysUntil < 0) return 'Overdue';
-    return `in ${daysUntil} days`;
-  }
-
-  private isCollectionSoon(daysUntil: number): boolean {
-    return daysUntil >= 0 && daysUntil <= 2;
   }
 
 }

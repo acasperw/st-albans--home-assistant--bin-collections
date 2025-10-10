@@ -21,16 +21,6 @@
   --wp--style--global--content-size: 1280px;
 
   // App styles
-  --text-muted: #95a5a6;
-  --warning-color: #f39c12;
-  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-  // Theming / surface layers
-  --color-surface: var(--wp--preset--color--light);
-  --color-surface-alt: #ffffff;
-  --color-surface-elevated: #ffffff;
-
   // Bin / caddy color tokens (day mode defaults)
   --bin-body-color: #2b2b2b;
   --bin-lid-color: #2b2b2b;
@@ -63,28 +53,6 @@
   clip: rect(0 0 0 0);
   border: 0;
 }
-
-
-
-
-// /* Global Styles - Optimized for 7" Touch Display (1280x720) */
-
-// // Color Palette
-// :root {
-//   --wp--preset--color--primary: #2c3e50;
-//   --wp--preset--color--secondary: #34495e;
-//   --wp--preset--color--secondary: #3498db;
-//   --wp--preset--color--primary: #f8f9fa;
-//   --wp--preset--color--light: #ffffff;
-//   --wp--custom--color--primary-text: #2c3e50;
-//   --wp--preset--color--dark: #7f8c8d;
-//   --text-muted: #95a5a6;
-//   --wp--custom--color--border: #e9ecef;
-//   --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.06);
-//   --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
-//   --wp--custom--default-border-radius: 12px;
-//   --wp--custom--default-border-radius-small: 8px;
-// }
 
 // Container & Layout - Full screen utilization without header
 .container {
@@ -150,187 +118,6 @@
   }
 }
 
-// Collection Groups Container - Fill all available space
-.collections-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  padding-right: 4px; // Space for scrollbar
-}
-
-// Collection Group - Optimized for 7" display, no overflow hidden
-.collection-group {
-  background: var(--wp--preset--color--light);
-  border-radius: var(--wp--custom--default-border-radius);
-  box-shadow: var(--shadow-light);
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: var(--shadow-medium);
-    transform: translateY(-1px);
-  }
-}
-
-// Group Header - Touch-friendly size with rounded corners
-.group-header {
-  background: var(--wp--preset--color--primary);
-  color: white;
-  padding: 20px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 70px; // Touch-friendly height
-
-  &.soon {
-    background: linear-gradient(135deg, var(--warning-color), #e67e22);
-  }
-
-  h2 {
-    margin: 0;
-  }
-
-  .days-badge {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10px);
-    padding: 10px 18px;
-    border-radius: 20px;
-    font-size: 1.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-width: 110px;
-    text-align: center;
-
-    &.soon {
-      background: rgba(255, 255, 255, 0.35);
-      animation: pulse 2s infinite;
-    }
-  }
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.85;
-  }
-}
-
-// Services Grid - Flexbox layout for equal-width distribution
-.services-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  padding: 16px;
-}
-
-// Service Card - Flex-grow for equal distribution
-.service-card {
-  background: var(--wp--preset--color--light);
-  border: 2px solid var(--wp--custom--color--border);
-  border-radius: var(--wp--custom--default-border-radius-small);
-  padding: 20px;
-  transition: all 0.2s ease;
-  position: relative;
-  min-height: 130px;
-  cursor: pointer;
-  flex: 1; // Equal distribution of available space
-  min-width: 200px; // Minimum width to prevent cards getting too narrow
-}
-
-// Service Header
-.service-header {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-  justify-content: flex-end;
-
-  .bin-icon {
-    font-size: 2.5rem; // Larger for better visibility
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  }
-
-  h3 {
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--wp--preset--color--dark);
-    margin: 0;
-    line-height: 1.3;
-  }
-}
-
-
-// Scrollbar styling for touch display
-.collections-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.collections-container::-webkit-scrollbar-track {
-  background: #000;
-  border-radius: 4px;
-}
-
-.collections-container::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 4px;
-
-  &:hover {
-    background: var(--text-muted);
-  }
-}
-
-// Responsive fallbacks (for development/testing on other devices)
-@media (max-width: 700px) {
-
-  .services-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .group-header {
-    padding: 20px;
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-    min-height: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .service-card {
-    padding: 16px;
-    min-height: 120px;
-  }
-
-  .service-header .bin-icon {
-    font-size: 2rem;
-  }
-}
-
-// Accessibility
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-// Focus styles for better accessibility on touch display
-.service-card:focus-within,
-.collection-group:focus-within {
-  outline: 3px solid var(--wp--preset--color--secondary);
-  outline-offset: 2px;
-}
-
 
 // Bin 
 
@@ -356,71 +143,14 @@
   background: #000;
   color: #e2e6ea;
 
-  /* Surface & bin variable overrides (cool greys) */
-  --color-surface: #0c0d0f; /* base panels */
-  --color-surface-alt: #111317; /* slightly lifted */
-  --color-surface-elevated: #161a1f; /* highest elevation */
-  --bin-body-color: #343a40; /* lifted from pure black for contrast */
-  --bin-lid-color: #3d454c; /* slight differentiation */
-
-  .service-header h3 { color: #e5e9ed; }
-
-  .collection-group {
-    background: var(--color-surface);
-    box-shadow: 0 2px 4px #000, 0 0 0 1px #161a1d;
-  }
-
-  .group-header {
-    background: linear-gradient(135deg, #12151a, #0a0c0e);
-  }
-
-  .service-card {
-    background: var(--color-surface-alt);
-    border-color: #1f2428;
-    box-shadow: 0 1px 2px #000, 0 0 0 1px #1a1f23;
-  }
-
-  .days-badge { background: rgba(255, 255, 255, 0.12); }
+  /* Bin variable overrides (cool greys) */
+  --bin-body-color: #343a40;
+  /* lifted from pure black for contrast */
+  --bin-lid-color: #3d454c;
+  /* slight differentiation */
 
   .hero {
     background: radial-gradient(circle at 50% 65%, #0d1216, #000 70%);
-  }
-
-}
-
-.mode-toggle {
-  position: fixed;
-  top: 8px;
-  right: 8px;
-  background: rgba(255, 255, 255, 0.85);
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  font-size: 1.4rem;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .3s;
-  z-index: 50;
-
-  &:hover {
-    background: #fff;
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--wp--preset--color--secondary);
-  }
-}
-
-.night-mode .mode-toggle {
-  background: rgba(32, 43, 56, 0.9);
-  color: #f1f5f9;
-
-  &:hover {
-    background: #253341;
   }
 }
 
@@ -435,23 +165,41 @@
   padding: 40px 40px 40px;
   box-sizing: border-box;
   color: #fff;
+
+  &.compact {
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .hero-inner {
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .hero.compact & {
+    flex: none;
+    max-width: 100%;
+  }
 }
 
 .hero-header {
   text-align: center;
   margin-bottom: 40px;
+
+  .hero.compact & {
+    margin-bottom: 30px;
+  }
 }
 
 .hero-header h1 {
   font-size: 3rem;
   margin: 0 0 10px;
   letter-spacing: 1px;
+
+  .hero.compact & {
+    font-size: 2.2rem;
+  }
 }
 
 .hero-header .hero-date {
@@ -467,6 +215,15 @@
   flex-wrap: wrap;
   margin-top: auto;
   margin-bottom: 60px;
+
+  &.compact {
+    gap: 40px;
+    margin: 0;
+  }
+
+  .hero.compact & {
+    margin-bottom: 40px;
+  }
 }
 
 .hero-bin-wrapper {
@@ -475,34 +232,56 @@
   align-items: center;
   gap: 18px;
   animation: rise-in .8s ease;
+
+  .hero-bins.compact & {
+    gap: 12px;
+  }
 }
 
 .hero-bin-label {
   font-size: 2rem;
   font-weight: 600;
   letter-spacing: .5px;
-}
 
-@media (max-width: 900px) {
-  .hero-header h1 {
-    font-size: 2.4rem;
-  }
-
-  .hero-bins {
-    gap: 36px;
-  }
-
-  .hero-bin-label {
-    font-size: 1.3rem;
-  }
-
-  .hero {
-    padding: 80px 24px 32px;
+  .hero-bins.compact & {
+    font-size: 1.4rem;
   }
 }
 
-@media (max-height: 640px) {
-  .hero-bins {
-    margin-bottom: 30px;
+.next-collection-footer {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.after-next-text {
+  font-size: 2rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.after-next-date {
+  font-size: 1.7rem;
+  opacity: .85;
+}
+
+// Compact styling for bin components
+.hero-bins.compact app-wheelie-bin {
+  .bin {
+    width: 150px;
+  }
+
+  .bin-icon-overlay {
+    font-size: 4rem;
+  }
+}
+
+.hero-bins.compact app-food-caddy {
+  .caddy {
+    width: 150px;
+  }
+  .caddy-icon-overlay {
+    font-size: 2rem;
   }
 }
