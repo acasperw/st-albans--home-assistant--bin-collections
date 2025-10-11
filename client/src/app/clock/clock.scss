@@ -49,9 +49,3 @@
 	text-align: center;
 	transform: translateY(12%);
 }
-
-@media (max-width: 600px) {
-	.clock-face {
-		font-size: clamp(3rem, 24vw, 8rem);
-	}
-}

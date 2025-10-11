@@ -9,7 +9,7 @@ import { Injectable, NgZone, signal } from '@angular/core';
 })
 export class IdleService {
   
-  private timeoutMs = 2 * 1000; // 2 minutes
+  private timeoutMs = 2 * 60 * 1000; // 2 minutes
   private lastActive = Date.now();
   private timer: any;
 
