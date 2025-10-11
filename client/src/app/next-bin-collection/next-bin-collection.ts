@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal, OnInit, DestroyRef, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ProcessedApiResponse, EnhancedCollectionDate, EnhancedProcessedService } from './models';
 import { CommonModule } from '@angular/common';
@@ -15,7 +15,9 @@ import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bi
     WheelieBinComponent,
     FoodCaddyComponent
   ],
-  templateUrl: './next-bin-collection.html'
+  templateUrl: './next-bin-collection.html',
+  styleUrls: ['./next-bin-collection.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class NextBinCollection implements OnInit {
 
@@ -86,7 +88,7 @@ export class NextBinCollection implements OnInit {
   private updateNightMode(): void {
     const hour = new Date().getHours();
     const shouldBeNight = hour >= 19 || hour < 6;
-    this.nightMode.set(true);
+    this.nightMode.set(shouldBeNight);
   }
 
   private fetchCollectionDates(): void {
