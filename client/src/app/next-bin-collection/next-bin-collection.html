@@ -1,8 +1,13 @@
-<div class="bin-collection--wrapper" [class.night-mode]="nightMode()">
+@let isLoading = loading();
+@let error = errorMessage();
+@let summary = summaryCollection();
+@let upcoming = isUpcoming();
+
+<div class="bin-collection--wrapper" [class.night-mode]="nightMode()" [class.error-message]="!!error">
   <div class="container">
 
     <!-- Loading State -->
-    @if (loading()) {
+    @if (isLoading) {
     <div class="loading">
       <div class="spinner"></div>
       <p>Loading collection dates...</p>
@@ -10,43 +15,44 @@
     }
 
     <!-- Error State -->
-    @if (errorMessage() && !loading()) {
+    @if (error && !isLoading) {
     <div class="api-error">
-      <strong>⚠️ Error:</strong> {{ errorMessage() }}
+      <strong>⚠️ Error:</strong> {{ error }}
     </div>
     }
 
     <!-- Main Collection Display -->
-    @if (!loading() && !errorMessage() && summaryCollection()) {
-    <section class="hero" [class.compact]="!isUpcoming()" role="region" aria-labelledby="hero-heading">
+    @if (!isLoading && !error && summary) {
+    <section class="hero" [class.compact]="!upcoming" role="region" aria-labelledby="hero-heading">
       <div class="hero-inner">
         <header class="hero-header">
           <h1 id="hero-heading">{{ summaryHeadline() }}</h1>
-          <div class="hero-date">{{ summaryCollection().formattedDate }}</div>
+          <div class="hero-date">{{ summary.formattedDate }}</div>
         </header>
-        <div class="hero-bins" [class.compact]="!isUpcoming()">
-          @for (svc of summaryCollection().services; track svc.serviceType) {
+        <div class="hero-bins" [class.compact]="!upcoming">
+          @for (svc of summary.services; track svc.serviceType) {
           @if (svc.serviceType === 'food') {
           <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
             <app-food-caddy caddyType="green" [icon]="svc.binIcon" [customAriaLabel]="svc.serviceName"
-              [class.compact]="!isUpcoming()" />
+              [class.compact]="!upcoming" />
             <div class="hero-bin-label">{{ svc.serviceName }}</div>
           </div>
           } @else {
           <div class="hero-bin-wrapper" [attr.aria-label]="svc.serviceName">
             <app-wheelie-bin [binType]="getBinType(svc.serviceType)" [icon]="svc.binIcon"
-              [customAriaLabel]="svc.serviceName" [class.compact]="!isUpcoming()" />
+              [customAriaLabel]="svc.serviceName" [class.compact]="!upcoming" />
             <div class="hero-bin-label">{{ svc.serviceName }}</div>
           </div>
           }
           }
         </div>
-        @if (!isUpcoming()) {
+        @if (!upcoming) {
+        @let afterNext = collectionAfterNext();
         <div class="next-collection-footer">
-          @if (collectionAfterNext()) {
+          @if (afterNext) {
           <div class="collection-after-next">
             <div class="after-next-text">Collection after that</div>
-            <div class="after-next-date">{{ collectionAfterNext()!.formattedDate }}</div>
+            <div class="after-next-date">{{ afterNext.formattedDate }}</div>
           </div>
           }
         </div>
