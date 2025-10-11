@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { ProcessedApiResponse, EnhancedCollectionDate, EnhancedProcessedService } from './models';
+import { ProcessedApiResponse, EnhancedCollectionDate } from './models';
 import { CommonModule } from '@angular/common';
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

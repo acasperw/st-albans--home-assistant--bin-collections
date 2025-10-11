@@ -9,7 +9,7 @@ import { WeatherBadgeComponent } from '../shared/components/weather-badge/weathe
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Clock implements OnInit, OnDestroy {
-  private secondTimer: any;
+  private secondTimer: ReturnType<typeof setInterval> | null = null;
   private now = signal(new Date());
 
   // Active (visible) state passed from parent for fade animation
@@ -31,7 +31,10 @@ export class Clock implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.secondTimer);
+    if (this.secondTimer !== null) {
+      clearInterval(this.secondTimer);
+      this.secondTimer = null;
+    }
   }
 
   private alignAndStartSecondTicks() {

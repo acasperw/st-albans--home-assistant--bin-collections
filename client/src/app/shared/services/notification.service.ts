@@ -7,7 +7,7 @@ export interface NotificationData {
   title: string;
   message: string;
   icon?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

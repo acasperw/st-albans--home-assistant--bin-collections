@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NotificationService, NotificationData, NotificationType } from './notification.service';
+import { NotificationService, NotificationData } from './notification.service';
 
 export interface TemperatureNotification extends NotificationData {
   temperature: number;
