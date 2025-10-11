@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { interval, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TemperatureNotificationService } from '../../services/temperature-notification.service';
 
 @Component({
   selector: 'app-weather-badge',
@@ -12,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class WeatherBadgeComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
+  private temperatureNotificationService = inject(TemperatureNotificationService);
 
   // Parent can hint active state (e.g. clock visible) to pause rotation if desired
   public active = input<boolean>(true);
@@ -20,6 +22,7 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   public temperatureC = signal<number | null>(null);
   public precipProb = signal<number | null>(null); // daily max precipitation probability
   public weatherCode = signal<number | null>(null);
+  public overnightMinTemp = signal<number | null>(null); // overnight minimum temperature
   public hasWeather = computed(() => this.temperatureC() !== null);
 
   // Rotation
@@ -40,7 +43,8 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.fetchWeather();
-    interval(10 * 60 * 1000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.fetchWeather());
+    // Update weather every 3 hours
+    interval(3 * 60 * 60 * 1000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.fetchWeather());
     this.startRotation();
   }
 
@@ -66,18 +70,48 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   private fetchWeather() {
     const lat = 51.7167;
     const lon = -0.3333;
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max&timezone=auto`;
+    // Updated URL to include daily temperature_2m_min for overnight minimum temperatures
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_min&timezone=auto&forecast_days=2`;
     this.http.get<any>(url).pipe(catchError(() => of(null))).subscribe(data => {
       if (!data) return;
+
+      // Reset notification suppression on each weather fetch
+      this.temperatureNotificationService.resetSuppression();
+
+      // Current weather data
       if (data.current) {
         if (typeof data.current.temperature_2m === 'number') this.temperatureC.set(Math.round(data.current.temperature_2m));
         if (typeof data.current.weather_code === 'number') this.weatherCode.set(data.current.weather_code);
       }
+
       try {
         if (data.daily && Array.isArray(data.daily.precipitation_probability_max)) {
           // Today is index 0 when timezone set to auto
           const todayVal = data.daily.precipitation_probability_max[0];
           if (typeof todayVal === 'number') this.precipProb.set(todayVal);
+        }
+
+        // Get tonight's minimum temperature
+        if (data.daily && Array.isArray(data.daily.temperature_2m_min)) {
+          const currentHour = new Date().getHours();
+          let overnightMin: number | undefined;
+
+          // Logic to determine which night's minimum temperature to use
+          if (currentHour >= 6 && currentHour < 18) {
+            // During daytime (6 AM - 6 PM), show tonight's minimum (index 0 for today)
+            overnightMin = data.daily.temperature_2m_min[0];
+          } else {
+            // During evening/night (6 PM - 6 AM), show upcoming night's minimum
+            // If it's already evening/night, we want the next night's minimum (index 1)
+            overnightMin = data.daily.temperature_2m_min[1] ?? data.daily.temperature_2m_min[0];
+          }
+
+          if (typeof overnightMin === 'number') {
+            const roundedMin = Math.round(overnightMin);
+            this.overnightMinTemp.set(roundedMin);
+            // Trigger notification check for overnight temperature
+            this.temperatureNotificationService.checkOvernightTemperature(roundedMin);
+          }
         }
       } catch { /* swallow */ }
     });
