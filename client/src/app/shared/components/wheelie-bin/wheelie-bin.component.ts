@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SvgSymbolService } from '../../services/svg-symbol.service';
 
@@ -94,7 +94,8 @@ export type WheeliBinType = 'brown' | 'black' | 'blue' | 'green' | 'black-body-b
       --body-color: #2C2C2C;
       --lid-color: #7C3AED;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WheelieBinComponent implements OnInit {
   private svgSymbolService = inject(SvgSymbolService);

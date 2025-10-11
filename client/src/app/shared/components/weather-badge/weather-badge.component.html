@@ -1,9 +1,14 @@
 @if (hasWeather()) {
-<div class="wrapper" [attr.aria-label]="weatherLabel() + ', ' + temperatureC() + ' degrees. ' + rainChanceText()">
+<div class="wrapper" [attr.aria-label]="weatherAriaLabel()">
   <span class="icon" aria-hidden="true">{{ weatherIcon() }}</span>
   <div class="rotate" aria-hidden="true">
     <span class="item state-0" [class.active]="weatherStateIndex() === 0">{{ temperatureC() }}°C</span>
-    <span class="item state-1" [class.active]="weatherStateIndex() === 1">{{ rainChanceText() }}</span>
+    @if (rainChanceText()) {
+      <span class="item state-1" [class.active]="weatherStateIndex() === 1">{{ rainChanceText() }}</span>
+    }
+    @if (maxTempC() !== null) {
+      <span class="item state-2" [class.active]="weatherStateIndex() === 2">{{ maxTempDisplay() }}</span>
+    }
   </div>
 </div>
 }

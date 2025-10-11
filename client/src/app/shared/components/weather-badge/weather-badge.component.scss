@@ -42,8 +42,9 @@
   transform: translateY(0);
 }
 
-.rotate .state-1 {
-  font-size: 0.5em;
+.rotate .state-1,
+.rotate .state-2 {
+  font-size: 1rem;
   letter-spacing: 1px;
   opacity: 0;
 }
@@ -53,6 +54,7 @@
   letter-spacing: 1px;
 }
 
-.rotate .state-1.active {
+.rotate .state-1.active,
+.rotate .state-2.active {
   opacity: 0.9;
 }

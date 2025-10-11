@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, signal, computed, input } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { WeatherBadgeComponent } from '../shared/components/weather-badge/weather-badge.component';
 
 @Component({
   selector: 'app-clock',
   imports: [WeatherBadgeComponent],
   templateUrl: './clock.html',
-  styleUrl: './clock.scss'
+  styleUrl: './clock.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Clock implements OnInit, OnDestroy {
   private secondTimer: any;

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { interval, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -8,7 +8,8 @@ import { TemperatureNotificationService } from '../../services/temperature-notif
 @Component({
   selector: 'app-weather-badge',
   templateUrl: './weather-badge.component.html',
-  styleUrl: './weather-badge.component.scss'
+  styleUrl: './weather-badge.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WeatherBadgeComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
@@ -23,15 +24,23 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   public precipProb = signal<number | null>(null); // daily max precipitation probability
   public weatherCode = signal<number | null>(null);
   public overnightMinTemp = signal<number | null>(null); // overnight minimum temperature
+  public maxTempC = signal<number | null>(null);
   public hasWeather = computed(() => this.temperatureC() !== null);
 
   // Rotation
-  private rotateTimer: any;
+  private rotateTimer: ReturnType<typeof setInterval> | null = null;
   public weatherStateIndex = signal(0);
-  private readonly totalStates = 2;
 
   public weatherIcon = computed(() => this.mapWeatherIcon(this.weatherCode()));
   public weatherLabel = computed(() => this.mapWeatherLabel(this.weatherCode()));
+  public maxTempDisplay = computed(() => {
+    const max = this.maxTempC();
+    return max == null ? '' : `Max ${max}°C`;
+  });
+  public maxTempDescription = computed(() => {
+    const max = this.maxTempC();
+    return max == null ? '' : `Maximum temperature ${max} degrees`;
+  });
 
   public rainChanceText = computed(() => {
     const p = this.precipProb();
@@ -39,6 +48,21 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
     if (p <= 50) return `Rain chance ${p}%`;
     if (p <= 80) return `Rain likely (${p}%)`;
     return `Rain very likely: ${p}%`;
+  });
+
+  public weatherAriaLabel = computed(() => {
+    const parts: string[] = [];
+    const label = this.weatherLabel();
+    const currentTemp = this.temperatureC();
+    const rain = this.rainChanceText();
+    const maxDescription = this.maxTempDescription();
+
+    if (label) parts.push(label);
+    if (currentTemp != null) parts.push(`${currentTemp} degrees`);
+    if (rain) parts.push(rain);
+    if (maxDescription) parts.push(maxDescription);
+
+    return parts.join(', ');
   });
 
   ngOnInit(): void {
@@ -49,29 +73,37 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.rotateTimer);
+    if (this.rotateTimer !== null) {
+      clearInterval(this.rotateTimer);
+      this.rotateTimer = null;
+    }
   }
 
   private startRotation() {
     this.rotateTimer = setInterval(() => {
-      if (this.active() && this.hasWeather()) {
-        // Only rotate if we have rain text to show (state 1)
-        const hasRain = this.rainChanceText() !== '';
-        if (hasRain) {
-          this.weatherStateIndex.update(i => (i + 1) % this.totalStates);
-        } else {
-          // Stay on temperature (state 0) if no rain info
-          this.weatherStateIndex.set(0);
-        }
+      if (!this.active() || !this.hasWeather()) {
+        return;
       }
+
+      const availableStates = this.getAvailableStates();
+
+      if (availableStates.length <= 1) {
+        this.weatherStateIndex.set(availableStates[0] ?? 0);
+        return;
+      }
+
+      const currentState = this.weatherStateIndex();
+      const currentIndex = availableStates.indexOf(currentState);
+      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % availableStates.length;
+      this.weatherStateIndex.set(availableStates[nextIndex]);
     }, 4000);
   }
 
   private fetchWeather() {
     const lat = 51.7167;
     const lon = -0.3333;
-    // Updated URL to include daily temperature_2m_min for overnight minimum temperatures
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_min&timezone=auto&forecast_days=2`;
+  // Include hourly temps so we can suppress the max once it has passed for the day
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_min,temperature_2m_max&hourly=temperature_2m&timezone=auto&forecast_days=2`;
     this.http.get<any>(url).pipe(catchError(() => of(null))).subscribe(data => {
       if (!data) return;
 
@@ -81,7 +113,9 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
       // Current weather data
       if (data.current) {
         if (typeof data.current.temperature_2m === 'number') this.temperatureC.set(Math.round(data.current.temperature_2m));
+        else this.temperatureC.set(null);
         if (typeof data.current.weather_code === 'number') this.weatherCode.set(data.current.weather_code);
+        else this.weatherCode.set(null);
       }
 
       try {
@@ -89,6 +123,9 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
           // Today is index 0 when timezone set to auto
           const todayVal = data.daily.precipitation_probability_max[0];
           if (typeof todayVal === 'number') this.precipProb.set(todayVal);
+          else this.precipProb.set(null);
+        } else {
+          this.precipProb.set(null);
         }
 
         // Get tonight's minimum temperature
@@ -113,8 +150,102 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
             this.temperatureNotificationService.checkOvernightTemperature(roundedMin);
           }
         }
+
+        this.updateMaxTemperatureState(data);
       } catch { /* swallow */ }
+
+      this.ensureValidStateIndex();
     });
+  }
+
+  private updateMaxTemperatureState(data: any): void {
+    // Default to no max temp so we never show stale data when parsing fails
+    let upcomingMax: number | null = null;
+
+    if (data?.daily && Array.isArray(data.daily.temperature_2m_max)) {
+      const todayMax = data.daily.temperature_2m_max[0];
+      if (typeof todayMax === 'number') {
+        upcomingMax = Math.round(todayMax);
+      }
+    }
+
+    if (upcomingMax === null || !data?.hourly || !Array.isArray(data.hourly.temperature_2m) || !Array.isArray(data.hourly.time)) {
+      this.maxTempC.set(upcomingMax);
+      return;
+    }
+
+    // Walk hourly temps for today to find when the forecast peak occurs
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth();
+    const todayDate = now.getDate();
+    let peakIndex: number | null = null;
+
+    for (let i = 0; i < data.hourly.temperature_2m.length; i++) {
+      const temp = data.hourly.temperature_2m[i];
+      const timeStr = data.hourly.time[i];
+      if (typeof temp !== 'number' || typeof timeStr !== 'string') continue;
+
+      const stamp = new Date(timeStr);
+      if (Number.isNaN(stamp.getTime())) continue;
+      if (stamp.getFullYear() !== todayYear || stamp.getMonth() !== todayMonth || stamp.getDate() !== todayDate) continue;
+
+      if (peakIndex === null || temp > data.hourly.temperature_2m[peakIndex]) {
+        peakIndex = i;
+      }
+    }
+
+    if (peakIndex === null) {
+      this.maxTempC.set(upcomingMax);
+      return;
+    }
+
+    const peakTime = new Date(data.hourly.time[peakIndex]);
+    if (Number.isNaN(peakTime.getTime())) {
+      this.maxTempC.set(upcomingMax);
+      return;
+    }
+
+    const peakTimeMs = peakTime.getTime();
+    const currentMs = now.getTime();
+
+    if (peakTimeMs < currentMs) {
+      // Peak already occurred, drop the max state
+      this.maxTempC.set(null);
+    } else {
+      this.maxTempC.set(upcomingMax);
+    }
+  }
+
+  private ensureValidStateIndex(): void {
+    const availableStates = this.getAvailableStates();
+
+    if (availableStates.length === 0) {
+      this.weatherStateIndex.set(0);
+      return;
+    }
+
+    if (!availableStates.includes(this.weatherStateIndex())) {
+      this.weatherStateIndex.set(availableStates[0]);
+    }
+  }
+
+  private getAvailableStates(): number[] {
+    const states: number[] = [];
+
+    if (this.hasWeather()) {
+      states.push(0);
+    }
+
+    if (this.rainChanceText()) {
+      states.push(1);
+    }
+
+    if (this.maxTempC() !== null) {
+      states.push(2);
+    }
+
+    return states;
   }
 
   private mapWeatherIcon(code: number | null): string {

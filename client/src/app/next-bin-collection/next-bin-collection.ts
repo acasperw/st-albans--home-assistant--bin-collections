@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ProcessedApiResponse, EnhancedCollectionDate, EnhancedProcessedService } from './models';
 import { CommonModule } from '@angular/common';
@@ -17,7 +17,8 @@ import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bi
   ],
   templateUrl: './next-bin-collection.html',
   styleUrls: ['./next-bin-collection.scss'],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NextBinCollection implements OnInit {
 

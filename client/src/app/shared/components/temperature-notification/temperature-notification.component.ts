@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { TemperatureNotificationService } from '../../services/temperature-notification.service';
 import { NotificationComponent } from '../notification/notification.component';
 
@@ -12,7 +12,8 @@ import { NotificationComponent } from '../notification/notification.component';
       [allowDismiss]="allowDismiss()"
       (dismiss)="dismissNotification()">
     </app-notification>
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TemperatureNotificationComponent {
   protected notificationService = inject(TemperatureNotificationService);

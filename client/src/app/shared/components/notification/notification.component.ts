@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NotificationData } from '../../services/notification.service';
 
 @Component({
@@ -163,7 +163,8 @@ import { NotificationData } from '../../services/notification.service';
     .notification.clickable:hover .notification-dismiss {
       opacity: 1;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotificationComponent {
   // Input properties

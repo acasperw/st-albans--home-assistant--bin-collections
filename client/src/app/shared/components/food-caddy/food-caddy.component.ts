@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SvgSymbolService } from '../../services/svg-symbol.service';
 
@@ -32,6 +32,7 @@ export type FoodCaddyType = 'green' | 'black-body-green-lid';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host {
       display: inline-block;

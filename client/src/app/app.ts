@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { IdleService } from './shared/services/idle.service';
 import { Clock } from './clock/clock';
@@ -11,7 +11,8 @@ import { TemperatureNotificationComponent } from './shared/components/temperatur
     <router-outlet />
     <app-clock [active]="idle.isIdle()" />
     <app-temperature-notification [active]="idle.isIdle()" />
-  `
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App {
 
