@@ -1,8 +1,8 @@
 // Weather badge component styles
 :host {
   position: fixed;
-  top: 1.2rem;
-  left: 1.4rem;
+  top: var(--space--3);
+  left: var(--space--3);
   pointer-events: none;
   z-index: 10000;
 }
@@ -10,8 +10,8 @@
 .wrapper {
   display: flex;
   align-items: baseline;
-  gap: 1.2rem;
-  font-size: 3.75rem;
+  gap: var(--space--3);
+  font-size: clamp(2rem, 4vw, 3.75rem);
   line-height: 1.1;
   font-weight: 500;
 }
@@ -44,12 +44,13 @@
 
 .rotate .state-1 {
   font-size: 0.5em;
-  letter-spacing: 0.02em;
+  letter-spacing: 1px;
   opacity: 0;
 }
 
 .rotate .state-0 {
   font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .rotate .state-1.active {

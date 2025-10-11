@@ -4,6 +4,15 @@
 @use "styles/global";
 
 :root {
+  // Typography system
+  --wp--custom--typography--font-size--heading-1: clamp(2.5rem, 4vw, 3rem);
+  --wp--custom--typography--font-size--heading-2: clamp(1.75rem, 3vw, 2rem);
+  --wp--custom--typography--font-size--heading-3: clamp(1.5rem, 2.5vw, 1.75rem);
+  --wp--preset--font-size--medium: 1rem;
+  --wp--preset--font-size--large: 1.25rem;
+  --wp--preset--font-size--text: 1.75rem;
+  --wp--preset--font-size--message: 2rem;
+
   // Patter setup
   --wp--preset--font-family--body-font: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
@@ -78,12 +87,12 @@
     border-top: 4px solid var(--wp--preset--color--secondary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+    margin-bottom: var(--space--3);
   }
 
   p {
     color: var(--wp--preset--color--dark);
-    font-size: 1.2rem;
+    font-size: var(--wp--preset--font-size--text);
   }
 }
 
@@ -98,20 +107,21 @@
 }
 
 // Error State
-.error {
+.api-error {
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   border: 1px solid #f87171;
   border-radius: var(--wp--custom--default-border-radius);
-  padding: 16px 20px;
-  margin-bottom: 16px;
+  padding: var(--space--2) var(--space--3);
+  margin-bottom: var(--space--2);
   color: #dc2626;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: var(--wp--preset--font-size--medium);
   flex-shrink: 0;
 
   strong {
     display: block;
-    margin-bottom: 6px;
-    font-size: 1.1rem;
+    margin-bottom: var(--space--1);
+    font-size: var(--wp--preset--font-size--large);
+    letter-spacing: 1px;
   }
 }

@@ -43,13 +43,13 @@ import { NotificationData } from '../../services/notification.service';
   styles: [`
     .notification {
       position: fixed;
-      bottom: var(--space--3);
+      bottom: var(--space--6);
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem;
+      gap: var(--space--3);
+      padding: var(--space--3) var(--space--4);
       border-radius: 16px;
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.4),
@@ -135,25 +135,25 @@ import { NotificationData } from '../../services/notification.service';
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space--1);
     }
 
     .notification-title {
-      font-size: 2rem;
+      font-size: var(--wp--preset--font-size--message);
       font-weight: 600;
       line-height: 1.2;
-      letter-spacing: 0.02em;
+      letter-spacing: 1px;
     }
 
     .notification-message {
-      font-size: 1.4rem;
+      font-size: var(--wp--preset--font-size--large);
       line-height: 1.4;
       opacity: 0.95;
       font-weight: 500;
     }
 
     .notification-dismiss {
-      font-size: 1.4rem;
+      font-size: var(--wp--preset--font-size--text);
       opacity: 0.7;
       flex-shrink: 0;
       transition: opacity 0.2s ease;

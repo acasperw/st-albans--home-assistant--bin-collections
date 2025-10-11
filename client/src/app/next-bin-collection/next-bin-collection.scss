@@ -46,7 +46,7 @@
   min-height: 100vh;
   
   border-radius: 0;
-  padding: 40px 40px 40px;
+  padding: var(--space--5) var(--space--5) var(--space--5);
   box-sizing: border-box;
   color: #fff;
 
@@ -69,21 +69,22 @@
 
 .hero-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space--5);
 
   .hero.compact & {
-    margin-bottom: 30px;
+    margin-bottom: var(--space--4);
   }
 }
 
 .hero-header h1 {
-  font-size: 3rem;
-  margin: 0 0 10px;
+  font-size: var(--wp--custom--typography--font-size--heading-1);
+  margin: 0 0 var(--space--2);
   letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .hero-header .hero-date {
-  font-size: 1.75rem;
+  font-size: var(--wp--preset--font-size--text);
   opacity: .85;
 }
 
@@ -91,7 +92,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 60px;
+  gap: var(--space--6);
   flex-wrap: wrap;
   margin-top: auto;
   margin-bottom: var(--space--6);
@@ -105,30 +106,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: var(--space--3);
   animation: rise-in .8s ease;
 }
 
 .hero-bin-label {
-  font-size: 2rem;
+  font-size: var(--wp--preset--font-size--message);
   font-weight: 600;
-  letter-spacing: .5px;
+  letter-spacing: 1px;
 }
 
 .next-collection-footer {
   text-align: center;
-  padding-top: 20px;
+  padding-top: var(--space--3);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .after-next-text {
-  font-size: 2rem;
+  font-size: var(--wp--preset--font-size--message);
   font-weight: 500;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space--2);
+  letter-spacing: 1px;
 }
 
 .after-next-date {
-  font-size: 1.7rem;
+  font-size: var(--wp--preset--font-size--text);
+  opacity: .85;
+}
+
+.collection-after-next {
   opacity: .85;
 }
 
