@@ -110,7 +110,7 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
             const roundedMin = Math.round(overnightMin);
             this.overnightMinTemp.set(roundedMin);
             // Trigger notification check for overnight temperature
-            this.temperatureNotificationService.checkOvernightTemperature(roundedMin);
+            this.temperatureNotificationService.checkOvernightTemperature(2);
           }
         }
       } catch { /* swallow */ }

@@ -10,7 +10,7 @@ import { TemperatureNotificationComponent } from './shared/components/temperatur
   template: `
     <router-outlet />
     <app-clock [active]="idle.isIdle()" />
-    <app-temperature-notification [active]="idle.isIdle()" />
+    <app-temperature-notification />
   `
 })
 export class App {

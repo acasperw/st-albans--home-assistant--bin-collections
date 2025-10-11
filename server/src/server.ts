@@ -1,10 +1,9 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
-import axios from 'axios';
 import path from 'path';
-import { ApiResponse, CacheData, HealthCheckResponse, TestScenario, ProcessedApiResponse } from './types';
-import { processApiResponse, getDaysUntil } from './data-processor';
-import { generateTestData } from './test-data';
+import { HealthCheckResponse, TestScenario } from './types';
+import { binCollectionRouter } from './routes/bin-collection.route';
+import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -15,13 +14,7 @@ const UPRN = process.env.UPRN;
 const TEST_MODE = process.env.TEST_MODE === 'true' || false;
 const TEST_MODE_VARIANT: TestScenario = (process.env.TEST_MODE_VARIANT as TestScenario) || 'tomorrow';
 
-// Cache configuration
-const cache: CacheData = {
-  data: null,
-  processedData: null,
-  timestamp: null,
-  TTL: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
-};
+// Bin collection caching now handled in services/bin-collection.service
 
 const app = express();
 
@@ -44,93 +37,8 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Helper function to check if cache is valid
-function isCacheValid(): boolean {
-  if (!cache.data || !cache.timestamp) {
-    return false;
-  }
-  const now = Date.now();
-  return (now - cache.timestamp) < cache.TTL;
-}
-
-// Helper function to fetch fresh data from API
-async function fetchFreshData(uprn: string): Promise<CacheData> {
-  // console.log(`Fetching fresh bin collection data from API for UPRN: ${uprn}`);
-
-  const response = await axios.post<ApiResponse>(
-    'https://gis.stalbans.gov.uk/NoticeBoard9/VeoliaProxy.NoticeBoard.asmx/GetServicesByUprnAndNoticeBoard',
-    {
-      uprn: parseInt(uprn),
-      noticeBoard: 'default'
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json'
-      }
-    }
-  );
-
-  // Update cache with both raw and processed data
-  cache.data = response.data;
-  cache.processedData = processApiResponse(response.data);
-  cache.timestamp = Date.now();
-
-  // Successfully fetched and cached bin collection data
-  return cache;
-}
-
-// NOTE: We intentionally recalculate relative fields (daysUntil) on every request instead of
-// storing them in the 24h cache. Only absolute collection datetimes are cached.
-// This prevents the UI from showing stale 'In X days' / 'Put out tonight!' messaging after midnight
-// without forcing an upstream API refresh.
-function withDynamicRelativeFields(processed: ProcessedApiResponse): ProcessedApiResponse {
-  return {
-    collections: processed.collections.map(c => ({
-      ...c, daysUntil: getDaysUntil(c.date)
-    })).sort((a, b) => a.date.localeCompare(b.date))
-  };
-}
-
-app.get('/api/bin-collection', async (req: Request, res: Response): Promise<void> => {
-  try {
-    // If test mode is enabled, return mock data
-    if (TEST_MODE) {
-      console.log(`TEST_MODE enabled: returning mock data scenario='${TEST_MODE_VARIANT}'`);
-      const testData = generateTestData(TEST_MODE_VARIANT);
-      res.json(testData);
-      return;
-    }
-
-    if (!UPRN) {
-      res.status(500).json({
-        error: 'UPRN not configured',
-        message: 'UPRN environment variable is required'
-      });
-      return;
-    }
-
-    const uprn = UPRN;
-
-    // Check if we have valid cached data
-    if (isCacheValid() && cache.processedData) {
-      // Serve cached absolute dates but recompute relative daysUntil now
-      res.json(withDynamicRelativeFields(cache.processedData));
-      return;
-    }
-
-    // Fetch fresh data if cache is invalid or empty
-    const tempCache = await fetchFreshData(uprn);
-    res.json(withDynamicRelativeFields(tempCache.processedData!));
-
-  } catch (error) {
-    console.error('Error fetching bin collection data:', error instanceof Error ? error.message : 'Unknown error');
-    res.status(500).json({
-      error: 'Failed to fetch bin collection data',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
+// Mount bin collection routes under /api
+app.use('/api', binCollectionRouter);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
