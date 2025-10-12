@@ -408,6 +408,34 @@
   color: #374151;
 }
 
+/* Fetching Product Info */
+.fetching-info {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fetching-info p {
+  margin: 0.5rem 0 0 0;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Form */
 .add-form {
   padding: 1.5rem;

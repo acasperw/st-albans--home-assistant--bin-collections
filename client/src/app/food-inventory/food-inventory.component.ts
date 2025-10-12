@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FoodInventoryService, FoodItem, AddFoodItemRequest } from '../shared/services/food-inventory.service';
 import { BarcodeListenerService } from '../shared/services/barcode-listener.service';
+import { OpenFoodFactsService } from '../shared/services/open-food-facts.service';
 
 @Component({
   selector: 'app-food-inventory',
@@ -15,11 +16,13 @@ import { BarcodeListenerService } from '../shared/services/barcode-listener.serv
 export class FoodInventoryComponent implements OnInit {
   private foodService = inject(FoodInventoryService);
   private barcodeService = inject(BarcodeListenerService);
+  private openFoodFacts = inject(OpenFoodFactsService);
   private router = inject(Router);
 
   // UI state
   public showAddForm = signal(false);
   public lastScannedCode = signal<string | null>(null);
+  public fetchingProductInfo = signal(false);
 
   // Form data
   public newItem = signal<Partial<AddFoodItemRequest>>({
@@ -73,16 +76,44 @@ export class FoodInventoryComponent implements OnInit {
       return;
     }
 
-    // Open add form with barcode pre-filled
-    this.newItem.set({
-      barcode: code,
-      name: '',
-      expiry: '',
-      quantity: 1,
-      source: 'scan'
+    // Fetch product info from Open Food Facts
+    this.fetchingProductInfo.set(true);
+    this.showToast(`🔍 Looking up product...`);
+
+    this.openFoodFacts.getProduct(code).subscribe(productInfo => {
+      this.fetchingProductInfo.set(false);
+
+      // Default expiry: 5 days from now
+      const defaultExpiry = new Date();
+      defaultExpiry.setDate(defaultExpiry.getDate() + 5);
+
+      if (productInfo.found && productInfo.name) {
+        // Product found! Pre-fill the form
+        this.newItem.set({
+          barcode: code,
+          name: productInfo.name,
+          category: productInfo.category,
+          expiry: defaultExpiry.toISOString().split('T')[0],
+          quantity: 1,
+          notes: productInfo.brand ? `Brand: ${productInfo.brand}` : undefined,
+          source: 'scan'
+        });
+        this.showToast(`✅ Found: ${productInfo.name}`);
+      } else {
+        // Product not found - open form with just barcode
+        this.newItem.set({
+          barcode: code,
+          name: '',
+          category: undefined,
+          expiry: defaultExpiry.toISOString().split('T')[0],
+          quantity: 1,
+          source: 'scan'
+        });
+        this.showToast(`⚠️ Product not found - please enter details manually`);
+      }
+
+      this.showAddForm.set(true);
     });
-    this.showAddForm.set(true);
-    this.showToast(`Scanned: ${code} - Please enter item details`);
   }
 
   /**

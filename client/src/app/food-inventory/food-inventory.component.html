@@ -98,6 +98,13 @@
           <button class="close-btn" (click)="closeAddForm()">×</button>
         </div>
         
+        @if (fetchingProductInfo()) {
+          <div class="fetching-info">
+            <div class="spinner"></div>
+            <p>🔍 Looking up product information...</p>
+          </div>
+        }
+        
         <form class="add-form" (ngSubmit)="submitAddForm()">
           @if (newItem().barcode) {
             <div class="form-group">

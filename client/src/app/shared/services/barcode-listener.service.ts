@@ -19,7 +19,7 @@ export class BarcodeListenerService {
   private keyListener = (e: KeyboardEvent) => {
     const now = performance.now();
 
-    console.log(`Key: ${e.key}, Time: ${now}, Buffer: ${this.getCurrentBuffer()}`);
+    console.log(`🔵 BarcodeListener - Key: "${e.key}", Time: ${now.toFixed(2)}, Buffer: "${this.getCurrentBuffer()}", Target:`, e.target);
 
     // Handle Enter key (scan termination)
     if (e.key === 'Enter') {
@@ -78,6 +78,7 @@ export class BarcodeListenerService {
   };
 
   constructor() {
+    console.log('BarcodeListenerService initialized');
     this.startListening();
   }
 
@@ -85,7 +86,13 @@ export class BarcodeListenerService {
    * Start listening for barcode scans
    */
   startListening(): void {
+    console.log('BarcodeListenerService: Starting to listen for keydown events');
     document.addEventListener('keydown', this.keyListener, { capture: true });
+    
+    // Test that listener is working
+    setTimeout(() => {
+      console.log('BarcodeListenerService: Listener active. Try scanning a barcode or typing quickly.');
+    }, 100);
   }
 
   /**
