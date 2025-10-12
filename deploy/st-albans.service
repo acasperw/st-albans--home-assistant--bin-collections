@@ -12,9 +12,9 @@ WorkingDirectory=/opt/st-albans/server
 EnvironmentFile=-/opt/st-albans/server/.env
 Environment=NODE_ENV=production
 # Explicit PATH so the nvm Node is found without shell init
-Environment=PATH=/home/zander/.nvm/versions/node/v22.19.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PATH=/home/zander/.nvm/versions/node/v22.20.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Use absolute Node path (update if Node version changes)
-ExecStart=/home/zander/.nvm/versions/node/v22.19.0/bin/node dist/server.js
+ExecStart=/home/zander/.nvm/versions/node/v22.20.0/bin/node dist/server.js
 Restart=always
 RestartSec=5
 

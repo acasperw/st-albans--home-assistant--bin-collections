@@ -42,7 +42,7 @@ node dist/server.js
 ```
 If it loads, stop with Ctrl+C and set up the service.
 
-Install systemd service (one‑time). If you used system Node (`/usr/bin/node`) you can keep the provided unit. If you used **nvm**, edit `deploy/st-albans.service` and replace the `ExecStart` line with the absolute path to your `node` (e.g. `/home/USERNAME/.nvm/versions/node/v22.19.0/bin/node dist/server.js`).
+Install systemd service (one‑time). If you used system Node (`/usr/bin/node`) you can keep the provided unit. If you used **nvm**, edit `deploy/st-albans.service` and replace the `ExecStart` line with the absolute path to your `node` (e.g. `/home/USERNAME/.nvm/versions/node/v22.20.0/bin/node dist/server.js`).
 ```
 sudo cp deploy/st-albans.service /etc/systemd/system/
 sudo systemctl daemon-reload
