@@ -5,7 +5,7 @@ Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin
 On the Raspberry Pi (first time). These steps install a current Node (NodeSource) *or* you can use `nvm` (see below). Using a system-wide Node simplifies the systemd service.
 ```
 sudo apt-get update
-sudo apt-get install -y curl chromium-browser git gh
+sudo apt-get install -y curl chromium git gh
 # Install Node (Option A: system-wide via NodeSource – recommended for service)
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
@@ -79,7 +79,7 @@ cat > ~/.config/autostart/chromium-kiosk.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
 Name=Chromium Kiosk
-Exec=chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
+Exec=chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
 X-GNOME-Autostart-enabled=true
 EOF
 ```
@@ -96,7 +96,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
+ExecStart=chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
 Restart=on-failure
 RestartSec=5
 
@@ -124,11 +124,11 @@ URL=http://localhost:3000
 HEALTH=$URL/api/health
 for i in {1..30}; do
 	if curl -fs "$HEALTH" >/dev/null 2>&1; then
-		exec chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
+		exec chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
 	fi
 	sleep 2
 done
-exec chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
+exec chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
 EOF
 chmod +x ~/bin/kiosk-wrapper.sh
 ```

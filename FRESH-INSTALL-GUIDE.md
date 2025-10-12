@@ -211,7 +211,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
+ExecStart=chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
 Restart=on-failure
 RestartSec=5
 
@@ -251,11 +251,11 @@ URL=http://localhost:3000
 HEALTH=$URL/api/health
 for i in {1..30}; do
 	if curl -fs "$HEALTH" >/dev/null 2>&1; then
-		exec chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
+		exec chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
 	fi
 	sleep 2
 done
-exec chromium-browser --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
+exec chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk "$URL"
 EOF
 
 chmod +x ~/bin/kiosk-wrapper.sh
