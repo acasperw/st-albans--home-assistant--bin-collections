@@ -96,12 +96,12 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
       const currentIndex = availableStates.indexOf(currentState);
       const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % availableStates.length;
       this.weatherStateIndex.set(availableStates[nextIndex]);
-    }, 4000);
+    }, 8000);
   }
 
   private fetchWeather() {
-    const lat = 51.7167;
-    const lon = -0.3333;
+    const lat = 51.721236;
+    const lon = -0.343218;
   // Include hourly temps so we can suppress the max once it has passed for the day
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_min,temperature_2m_max&hourly=temperature_2m&timezone=auto&forecast_days=2`;
     this.http.get<any>(url).pipe(catchError(() => of(null))).subscribe(data => {

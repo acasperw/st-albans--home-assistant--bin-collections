@@ -1,4 +1,5 @@
 import { Injectable, NgZone, inject, signal } from '@angular/core';
+import { environment } from 'src/environments/environment';
 
 /**
  * Service to detect user inactivity and expose an `isIdle` signal.
@@ -9,7 +10,7 @@ import { Injectable, NgZone, inject, signal } from '@angular/core';
 })
 export class IdleService {
 
-  private timeoutMs = 2 * 60 * 1000; // 2 minutes
+  private timeoutMs = environment.idleTimeoutMs;
   private lastActive = Date.now();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private readonly zone = inject(NgZone);

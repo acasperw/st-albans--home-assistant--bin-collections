@@ -12,7 +12,7 @@
   align-items: baseline;
   gap: var(--space--3);
   font-size: clamp(2rem, 4vw, 3.75rem);
-  line-height: 1.1;
+  line-height: 1em;
   font-weight: 500;
 }
 
@@ -33,7 +33,7 @@
   position: absolute;
   opacity: 0;
   transform: translateY(8px);
-  transition: opacity .5s ease, transform .5s ease;
+  transition: opacity .6s ease, transform .6s ease;
   will-change: opacity, transform;
 }
 
@@ -44,7 +44,7 @@
 
 .rotate .state-1,
 .rotate .state-2 {
-  font-size: 1rem;
+  font-size: clamp(2rem, 2.75vw, 3.75rem);
   letter-spacing: 1px;
   opacity: 0;
 }
