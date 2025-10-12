@@ -15,3 +15,13 @@ sudo systemctl restart avahi-daemon
 
 ## Reboot for changes to take full effect
 sudo reboot
+
+
+
+# give yourself ownership of /opt (or a subdir)
+sudo mkdir -p /opt
+sudo chown -R "$USER":"$USER" /opt
+
+# now clone without sudo
+cd /opt
+gh repo clone acasperw/st-albans--home-assistant--bin-collections st-albans
