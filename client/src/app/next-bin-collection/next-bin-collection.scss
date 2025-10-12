@@ -1,3 +1,5 @@
+@use '@patter/patter-core-styles/scss/breakpoints' as *;
+
 .bin-collection--wrapper {
 
   background: linear-gradient(160deg, var(--wp--preset--color--primary), #0d1117 60%);
@@ -19,19 +21,27 @@
 // Bin 
 
 .bin {
-  width: 96px;
-  height: auto;
-  --body-color: var(--bin-body-color);
-  --lid-color: var(--bin-lid-color);
-  max-width: 260px !important;
-}
-
-.caddy {
   width: 72px;
   height: auto;
   --body-color: var(--bin-body-color);
   --lid-color: var(--bin-lid-color);
   max-width: 260px !important;
+
+  @include media(">phone") {
+    width: 96px;
+  }
+}
+
+.caddy {
+  width: 56px;
+  height: auto;
+  --body-color: var(--bin-body-color);
+  --lid-color: var(--bin-lid-color);
+  max-width: 260px !important;
+
+  @include media(">phone") {
+    width: 72px;
+  }
 }
 
 // Night Mode
@@ -53,11 +63,15 @@
   flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  
   border-radius: 0;
-  padding: var(--space--5) var(--space--5) var(--space--5);
+  padding: var(--space--3) var(--space--3) var(--space--3);
   box-sizing: border-box;
   color: #fff;
+
+  @include media(">phone") {
+    
+    padding: var(--space--5) var(--space--5) var(--space--5);
+  }
 
   &.compact {
     justify-content: center;
@@ -78,7 +92,11 @@
 
 .hero-header {
   text-align: center;
-  margin-bottom: var(--space--5);
+  margin-bottom: var(--space--3);
+
+  @include media(">phone") {
+    margin-bottom: var(--space--5);
+  }
 
   .hero.compact & {
     margin-bottom: var(--space--4);
@@ -86,14 +104,14 @@
 }
 
 .hero-header h1 {
-  font-size: var(--wp--custom--typography--font-size--heading-1);
+  font-size: clamp(2rem, 5vw, var(--wp--custom--typography--font-size--heading-1));
   margin: 0 0 var(--space--2);
   letter-spacing: 1px;
   font-weight: 600;
 }
 
 .hero-header .hero-date {
-  font-size: var(--wp--preset--font-size--text);
+  font-size: clamp(0.875rem, 3vw, var(--wp--preset--font-size--text));
   opacity: .85;
 }
 
@@ -101,10 +119,15 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: var(--space--6);
+  gap: var(--space--3);
   flex-wrap: wrap;
   margin-top: auto;
-  margin-bottom: var(--space--6);
+  margin-bottom: var(--space--3);
+
+  @include media(">phone") {
+    gap: var(--space--6);
+    margin-bottom: var(--space--6);
+  }
 
   .hero.compact & {
     margin-bottom: var(--space--4);
@@ -115,12 +138,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space--3);
+  gap: var(--space--2);
   animation: rise-in .8s ease;
+
+  @include media(">phone") {
+    gap: var(--space--3);
+  }
 }
 
 .hero-bin-label {
-  font-size: var(--wp--preset--font-size--message);
+  font-size: clamp(0.75rem, 2.5vw, var(--wp--preset--font-size--message));
   font-weight: 600;
   letter-spacing: 1px;
 }
