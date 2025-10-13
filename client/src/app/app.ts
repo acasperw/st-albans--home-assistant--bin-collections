@@ -38,6 +38,8 @@ export class App {
   }
 
   private handleBarcodeScanned(barcode: string): void {
+    // Reset suppression on new scan to allow showing notifications again
+    this.notificationService.resetSuppression();
 
     /* Temp */
     if (BarcodeListenerService.isValidBarcode(barcode)) {
