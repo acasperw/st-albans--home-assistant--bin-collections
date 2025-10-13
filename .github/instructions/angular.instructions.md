@@ -42,3 +42,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Documentation
+- Do NOT create .md documentation files unless explicitly requested by the user
+- Focus on code implementation rather than documentation generation
+- Only create documentation when the user specifically asks for it (e.g., "create a README", "document this feature")
