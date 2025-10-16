@@ -4,6 +4,7 @@ import { IdleService } from './shared/services/idle.service';
 import { Clock } from './clock/clock';
 import { BarcodeListenerService } from './shared/services/barcode-listener.service';
 import { NotificationService } from './shared/services/notification.service';
+import { BinCollectionNotificationService } from './shared/services/bin-collection-notification.service';
 import { NotificationWrapperComponent } from './shared/components/notification-wrapper/notification-wrapper.component';
 
 @Component({
@@ -21,8 +22,12 @@ export class App {
   protected idle = inject(IdleService);
   private barcodeService = inject(BarcodeListenerService);
   private notificationService = inject(NotificationService);
+  private binNotificationService = inject(BinCollectionNotificationService);
 
   constructor() {
+    // Start monitoring for bin collection reminders
+    this.binNotificationService.startMonitoring();
+
     // React to barcode scans globally
     effect(() => {
       const scannedCode = this.barcodeService.lastScan();

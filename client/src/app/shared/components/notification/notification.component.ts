@@ -142,7 +142,6 @@ import { NotificationData } from '../../services/notification.service';
       font-size: var(--wp--preset--font-size--message);
       font-weight: 600;
       line-height: 1.2;
-      letter-spacing: 1px;
     }
 
     .notification-message {

@@ -7,6 +7,7 @@ import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
 import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bin.component';
+import { BinCollectionUtils } from '../shared/utils/bin-collection.utils';
 
 @Component({
   selector: 'app-next-bin-collection',
@@ -29,6 +30,7 @@ export class NextBinCollection implements OnInit {
   public collectionDates = signal<EnhancedCollectionDate[]>([]);
   public errorMessage = signal<string | null>(null);
   public nightMode = signal(false);
+  public hasLoadedDataBefore = signal(false); // Track if we ever had successful data
 
   // Find collection objects by relative day
   public todayCollection = computed(() => this.collectionDates().find(c => c.daysUntil === 0));
@@ -100,10 +102,17 @@ export class NextBinCollection implements OnInit {
     this.http.get<ProcessedApiResponse>(apiUrl).subscribe({
       next: (data) => {
         this.collectionDates.set(this.transformCollections(data));
+        this.errorMessage.set(null); // Clear any previous error
+        this.hasLoadedDataBefore.set(true); // Mark that we have data
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load bin collection dates. Please try again later.');
+        // Only show error if we've never loaded data before
+        if (!this.hasLoadedDataBefore()) {
+          this.errorMessage.set('Failed to load bin collection dates. Please try again later.');
+        } else {
+          this.errorMessage.set(null);
+        }
         this.loading.set(false);
       }
     });
@@ -113,44 +122,17 @@ export class NextBinCollection implements OnInit {
     return data.collections.map(collection => ({
       date: collection.date,
       daysUntil: collection.daysUntil,
-      formattedDate: this.formatDate(collection.date),
+      formattedDate: BinCollectionUtils.formatDate(collection.date),
       services: collection.services.map(service => ({
         ...service,
-        binIcon: this.getBinIcon(service.serviceType)
+        binIcon: BinCollectionUtils.getBinIcon(service.serviceType)
       }))
     }));
   }
 
-  // Updated helper methods for the new API response format
-  private getBinIcon(serviceType: string): string {
-    switch (serviceType) {
-      case 'refuse': return '🗑️';
-      case 'recycling': return '♻️';
-      case 'food': return '🍎';
-      case 'garden': return '🌿';
-      default: return '📦';
-    }
-  }
-
   // Helper method to get appropriate bin type for wheelie bins
   public getBinType(serviceType: string): 'brown' | 'black' | 'blue' | 'green' | 'black-body-blue-lid' | 'black-body-purple-lid' {
-    switch (serviceType) {
-      case 'garden': return 'green';
-      case 'refuse': return 'brown';
-      case 'recycling': return 'black';
-      case 'food': return 'green';
-      default: return 'black';
-    }
-  }
-
-  private formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short'
-    };
-    return date.toLocaleDateString('en-GB', options);
+    return BinCollectionUtils.getBinType(serviceType);
   }
 
 }

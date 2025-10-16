@@ -5,7 +5,12 @@ import { NotificationComponent } from '../notification/notification.component';
 
 /**
  * Unified notification wrapper that handles prioritization between
- * general notifications and temperature warnings
+ * temperature warnings, bin collection reminders, and general notifications
+ * 
+ * Priority order:
+ * 1. Temperature warnings (when idle) - safety critical
+ * 2. Bin collection reminders - important daily task
+ * 3. General notifications (barcodes, errors, etc.)
  */
 @Component({
   selector: 'app-notification-wrapper',
@@ -13,7 +18,7 @@ import { NotificationComponent } from '../notification/notification.component';
   template: `
     <app-notification 
       [notification]="activeNotification()"
-      [active]="true"
+      [active]="this.isIdle()"
       [allowDismiss]="canDismiss()"
       (dismiss)="handleDismiss()" />
   `,
@@ -26,25 +31,58 @@ export class NotificationWrapperComponent {
   // Allow parent to control when we're in idle/screensaver mode
   public isIdle = input<boolean>(false);
 
-  // Prioritize temperature notifications when idle
+  // Prioritize notifications based on importance
   protected activeNotification = computed(() => {
     const tempNotification = this.temperatureNotificationService.notification();
     const generalNotification = this.generalNotificationService.notification();
     
-    // Temperature warnings take priority when in idle/screensaver mode
-    return (tempNotification && this.isIdle()) ? tempNotification : generalNotification;
+    // 1. Temperature warnings take highest priority when idle (safety)
+    if (tempNotification && this.isIdle()) {
+      return tempNotification;
+    }
+
+    // 2. Check if general notification is a bin reminder (has collectionDate metadata)
+    if (generalNotification?.metadata && 'collectionDate' in generalNotification.metadata) {
+      return generalNotification; // Bin reminders have medium priority
+    }
+
+    // 3. Temperature notifications shown when not idle (lower priority)
+    if (tempNotification) {
+      return tempNotification;
+    }
+
+    // 4. Other general notifications (lowest priority)
+    return generalNotification;
   });
 
-  // Temperature notifications cannot be dismissed when idle (they're safety warnings)
+  // Determine if notification can be dismissed
   protected canDismiss = computed(() => {
     const tempNotification = this.temperatureNotificationService.notification();
-    return !(tempNotification && this.isIdle());
+    const activeNotif = this.activeNotification();
+
+    // Temperature warnings cannot be dismissed when idle
+    if (tempNotification && this.isIdle() && activeNotif === tempNotification) {
+      return false;
+    }
+
+    // Bin reminders can be dismissed
+    if (activeNotif?.metadata && 'collectionDate' in activeNotif.metadata) {
+      return true;
+    }
+
+    // All other notifications can be dismissed
+    return true;
   });
 
   protected handleDismiss(): void {
-    // Only dismiss general notifications, not temperature warnings when idle
-    if (!(this.temperatureNotificationService.notification() && this.isIdle())) {
-      this.generalNotificationService.clearNotification();
+    const tempNotification = this.temperatureNotificationService.notification();
+    
+    // Don't allow dismissing temperature warnings when idle
+    if (tempNotification && this.isIdle()) {
+      return;
     }
+
+    // Dismiss the general notification (includes bin reminders)
+    this.generalNotificationService.clearNotification();
   }
 }
