@@ -2,22 +2,17 @@ import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/cor
 import { RouterOutlet } from '@angular/router';
 import { IdleService } from './shared/services/idle.service';
 import { Clock } from './clock/clock';
-import { TemperatureNotificationComponent } from './shared/components/temperature-notification/temperature-notification.component';
 import { BarcodeListenerService } from './shared/services/barcode-listener.service';
 import { NotificationService } from './shared/services/notification.service';
-import { NotificationComponent } from './shared/components/notification/notification.component';
+import { NotificationWrapperComponent } from './shared/components/notification-wrapper/notification-wrapper.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Clock, TemperatureNotificationComponent, NotificationComponent],
+  imports: [RouterOutlet, Clock, NotificationWrapperComponent],
   template: `
     <router-outlet />
     <app-clock [active]="idle.isIdle()" />
-    <app-temperature-notification [active]="idle.isIdle()" />
-    <app-notification 
-      [notification]="notificationService.notification()"
-      [allowDismiss]="true"
-      (dismiss)="notificationService.clearNotification()" />
+    <app-notification-wrapper [isIdle]="idle.isIdle()" />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -25,7 +20,7 @@ export class App {
 
   protected idle = inject(IdleService);
   private barcodeService = inject(BarcodeListenerService);
-  protected notificationService = inject(NotificationService);
+  private notificationService = inject(NotificationService);
 
   constructor() {
     // React to barcode scans globally
@@ -57,6 +52,5 @@ export class App {
         icon: '𝄃𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃'
       });
     }
-
   }
 }
