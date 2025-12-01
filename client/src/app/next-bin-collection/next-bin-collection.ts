@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ProcessedApiResponse, EnhancedCollectionDate } from './models';
-import { CommonModule } from '@angular/common';
+
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
@@ -12,10 +12,9 @@ import { BinCollectionUtils } from '../shared/utils/bin-collection.utils';
 @Component({
   selector: 'app-next-bin-collection',
   imports: [
-    CommonModule,
     WheelieBinComponent,
     FoodCaddyComponent
-  ],
+],
   templateUrl: './next-bin-collection.html',
   styleUrls: ['./next-bin-collection.scss'],
   encapsulation: ViewEncapsulation.None,

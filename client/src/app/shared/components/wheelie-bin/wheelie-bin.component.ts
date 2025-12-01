@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { SvgSymbolService } from '../../services/svg-symbol.service';
 
 export type WheeliBinType = 'brown' | 'black' | 'blue' | 'green' | 'black-body-blue-lid' | 'black-body-purple-lid';
@@ -17,7 +17,7 @@ export type WheeliBinType = 'brown' | 'black' | 'blue' | 'green' | 'black-body-b
 
 @Component({
   selector: 'app-wheelie-bin',
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="bin-container">
       <svg 

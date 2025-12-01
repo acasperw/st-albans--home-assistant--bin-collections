@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { SvgSymbolService } from '../../services/svg-symbol.service';
 
 export type FoodCaddyType = 'green' | 'black-body-green-lid';
@@ -17,7 +17,7 @@ export type FoodCaddyType = 'green' | 'black-body-green-lid';
 
 @Component({
   selector: 'app-food-caddy',
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="caddy-container">
       <svg 
