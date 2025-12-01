@@ -279,7 +279,32 @@ systemctl --user restart chromium-kiosk.service
 
 ---
 
-## 13. Optional: Automatic Screen Brightness Control
+## 13. Optional: Network Watchdog (Auto-Reconnect on Loss)
+
+To automatically restore network connectivity when Wi-Fi/Ethernet drops:
+
+```bash
+sudo cp /opt/st-albans/deploy/network-watchdog.sh /usr/local/bin/
+sudo chmod +x /usr/local/bin/network-watchdog.sh
+sudo cp /opt/st-albans/deploy/network-watchdog.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now network-watchdog.service
+```
+
+**How it works:**
+- Pings Google DNS every 30 seconds
+- Automatically restarts network services if connection lost
+- Logs activity to `/var/log/network-watchdog.log`
+- App continues showing cached data during outages with retry logic
+
+**Check logs:**
+```bash
+sudo tail -f /var/log/network-watchdog.log
+```
+
+---
+
+## 14. Optional: Automatic Screen Brightness Control
 
 If your display supports brightness control via `/sys/class/backlight/11-0045/brightness` (range 0-31):
 
@@ -316,7 +341,7 @@ systemctl list-timers --all | grep brightness
 
 ---
 
-## 14. Reboot and Verify
+## 15. Reboot and Verify
 
 ```bash
 sudo reboot
@@ -329,7 +354,7 @@ After reboot:
 
 ---
 
-## 15. Future Updates
+## 16. Future Updates
 
 When you need to update the app after code changes:
 
@@ -349,7 +374,7 @@ sudo systemctl restart st-albans
 
 ---
 
-## 16. Useful Commands
+## 17. Useful Commands
 
 ### Service Management
 ```bash
@@ -402,9 +427,23 @@ cat /sys/class/backlight/11-0045/brightness
 echo 20 | sudo tee /sys/class/backlight/11-0045/brightness
 ```
 
+### Network Watchdog
+```bash
+# Check status
+sudo systemctl status network-watchdog.service
+
+# View logs
+sudo tail -f /var/log/network-watchdog.log
+
+# Test by disconnecting
+sudo ip link set wlan0 down
+# Watch it reconnect
+sudo ip link set wlan0 up
+```
+
 ---
 
-## 16. Troubleshooting
+## 18. Troubleshooting
 
 ### Service Won't Start
 ```bash
@@ -454,8 +493,9 @@ chmod +x deploy/*.sh
 
 ---
 
-## Summary Checklist
-
+- [ ] Brightness timers installed (optional)
+- [ ] Network watchdog installed (optional but recommended)
+- [ ] System rebooted and verified
 - [ ] System updated
 - [ ] Hostname set (optional)
 - [ ] Required packages installed (curl, chromium, git, gh, fonts)
@@ -479,10 +519,12 @@ chmod +x deploy/*.sh
 
 ```bash
 # Required
-UPRN=YOUR_UPRN_NUMBER
-
-# Optional (defaults shown)
-PORT=3000
+- `/etc/systemd/system/st-albans.service` - Backend service
+- `/etc/systemd/system/network-watchdog.service` - Network auto-reconnect (optional)
+- `/usr/local/bin/network-watchdog.sh` - Network watchdog script (optional)
+- `/etc/systemd/system/brightness-*.service` - Brightness services (optional)
+- `/etc/systemd/system/brightness-*.timer` - Brightness timers (optional)
+- `~/.config/systemd/user/chromium-kiosk.service` - Kiosk service
 HOST=0.0.0.0
 
 # Testing

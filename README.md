@@ -53,6 +53,17 @@ Check logs:
 journalctl -u st-albans -f
 ```
 
+### Optional: Network Watchdog (Auto-Reconnect on Network Loss)
+To automatically recover from Wi-Fi/network disconnections:
+```bash
+sudo cp deploy/network-watchdog.sh /usr/local/bin/
+sudo chmod +x /usr/local/bin/network-watchdog.sh
+sudo cp deploy/network-watchdog.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now network-watchdog.service
+```
+The app also has built-in retry logic and will show cached data during outages.
+
 ## Updating Later
 SSH to Pi:
 ```

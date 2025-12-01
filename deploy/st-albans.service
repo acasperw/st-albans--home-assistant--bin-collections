@@ -2,6 +2,9 @@
 Description=St Albans Bin Collection App
 After=network-online.target
 Wants=network-online.target
+# Wait a bit after network is available for DNS to be ready
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -16,7 +19,9 @@ Environment=PATH=/home/zander/.nvm/versions/node/v22.20.0/bin:/usr/local/sbin:/u
 # Use absolute Node path (update if Node version changes)
 ExecStart=/home/zander/.nvm/versions/node/v22.20.0/bin/node dist/server.js
 Restart=always
-RestartSec=5
+RestartSec=10
+# Restart even on successful exit (in case of network issues)
+RestartForceExitStatus=0
 
 # Baseline hardening (comment out if troubleshooting):
 NoNewPrivileges=true
