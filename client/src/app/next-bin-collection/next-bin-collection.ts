@@ -30,6 +30,7 @@ export class NextBinCollection implements OnInit {
   public errorMessage = signal<string | null>(null);
   public nightMode = signal(false);
   public hasLoadedDataBefore = signal(false); // Track if we ever had successful data
+  public isFallback = signal(false); // Track if using fallback schedule
 
   // Find collection objects by relative day
   public todayCollection = computed(() => this.collectionDates().find(c => c.daysUntil === 0));
@@ -103,6 +104,7 @@ export class NextBinCollection implements OnInit {
         this.collectionDates.set(this.transformCollections(data));
         this.errorMessage.set(null); // Clear any previous error
         this.hasLoadedDataBefore.set(true); // Mark that we have data
+        this.isFallback.set(data.isFallback || false); // Track fallback state
         this.loading.set(false);
       },
       error: () => {

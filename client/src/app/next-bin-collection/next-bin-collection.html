@@ -26,8 +26,14 @@
     <section class="hero" [class.compact]="!upcoming" role="region" aria-labelledby="hero-heading">
       <div class="hero-inner">
         <header class="hero-header">
-          <h1 id="hero-heading">{{ summaryHeadline() }}</h1>
-          <div class="hero-date">{{ summary.formattedDate }}</div>
+          <h1 id="hero-heading">{{summaryHeadline()}}</h1>
+          <div class="hero-date">
+            <span>{{ summary.formattedDate }}</span>
+            @if (isFallback()) {
+            <span class="fallback-indicator" title="Using estimated schedule (live data unavailable)"
+              aria-label="Using fallback schedule">⚠</span>
+            }
+          </div>
         </header>
         <div class="hero-bins" [class.compact]="!upcoming">
           @for (svc of summary.services; track svc.serviceType) {

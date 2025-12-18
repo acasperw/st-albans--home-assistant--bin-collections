@@ -58,6 +58,7 @@ export interface ProcessedCollectionDate {
 
 export interface ProcessedApiResponse {
   collections: ProcessedCollectionDate[];
+  isFallback?: boolean; // True when using fallback schedule instead of live data
 }
 
 export type TestScenario = 'tomorrow' | 'gap' | 'today';

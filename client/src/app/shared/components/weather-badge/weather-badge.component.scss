@@ -23,7 +23,7 @@
 
 .rotate {
   position: relative;
-  min-width: 14ch; // stable width avoiding layout shift
+  min-width: 15ch; // stable width avoiding layout shift
   height: 1em;
   display: flex;
   align-items: center;

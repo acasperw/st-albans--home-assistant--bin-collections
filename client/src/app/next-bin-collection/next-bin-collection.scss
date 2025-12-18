@@ -3,7 +3,7 @@
 .bin-collection--wrapper {
 
   background: linear-gradient(160deg, var(--wp--preset--color--primary), #0d1117 60%);
-  
+
   &.night-mode {
     background: radial-gradient(circle at 50% 65%, #0d1216, #000 70%);
   }
@@ -69,7 +69,7 @@
   color: #fff;
 
   @include media(">phone") {
-    
+
     padding: var(--space--5) var(--space--5) var(--space--5);
   }
 
@@ -110,9 +110,36 @@
   font-weight: 600;
 }
 
+.fallback-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1em;
+  color: #ffc107;
+  opacity: 0.85;
+  cursor: help;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .hero-header .hero-date {
   font-size: clamp(0.875rem, 3vw, var(--wp--preset--font-size--text));
   opacity: .85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space--2);
 }
 
 .hero-bins {
@@ -189,6 +216,7 @@
   .caddy {
     width: 150px;
   }
+
   .caddy-icon-overlay {
     font-size: 2rem;
   }
