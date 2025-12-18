@@ -25,3 +25,8 @@ sudo chown -R "$USER":"$USER" /opt
 # now clone without sudo
 cd /opt
 gh repo clone acasperw/st-albans--home-assistant--bin-collections st-albans
+
+
+## SSH Key changed
+Use ssh-keygen to remove it automatically
+`ssh-keygen -R 192.168.68.85`

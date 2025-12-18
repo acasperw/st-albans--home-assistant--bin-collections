@@ -13,7 +13,8 @@ export const cache: CacheData = {
 
 // Check if cache still valid
 export function isCacheValid(): boolean {
-  if (!cache.data || !cache.timestamp) return false;
+  // Cache is valid if we have processed data (including fallback) and timestamp is within TTL
+  if (!cache.processedData || !cache.timestamp) return false;
   const now = Date.now();
   return (now - cache.timestamp) < cache.TTL;
 }
