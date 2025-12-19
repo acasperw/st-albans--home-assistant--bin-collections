@@ -15,7 +15,7 @@ export const DEFAULT_BARCODE_CONFIG: BarcodeListenerConfig = {
   maxScanDuration: 500,
   minBarcodeLength: 6,
   maxBarcodeLength: 18,
-  autoStart: true,
+  autoStart: !environment.production, // Is enabled for non-production
   enableDebugLogging: !environment.production
 };
 
