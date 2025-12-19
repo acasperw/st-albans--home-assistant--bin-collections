@@ -101,7 +101,6 @@ export class BarcodeListenerService implements OnDestroy {
   };
 
   constructor() {
-    this.log('BarcodeListenerService initialized');
     if (this.config.autoStart) {
       this.startListening();
     }
