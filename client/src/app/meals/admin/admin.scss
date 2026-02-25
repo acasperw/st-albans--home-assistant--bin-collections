@@ -1,7 +1,6 @@
 .admin-page {
   min-height: 100vh;
   padding: 1rem;
-  max-width: 600px;
   margin: 0 auto;
   font-family: var(--wp--preset--font-family--body-font);
   color: var(--wp--preset--color--dark);
@@ -208,6 +207,7 @@
   .meal-name {
     white-space: nowrap;
     overflow: hidden;
+    line-height: 2rem;
     text-overflow: ellipsis;
   }
 

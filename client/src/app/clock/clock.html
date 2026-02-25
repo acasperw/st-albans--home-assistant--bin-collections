@@ -4,4 +4,10 @@
 		<span class="time-main">{{ time() }}</span>
 		<span class="time-seconds">{{ seconds() }}</span>
 	</div>
+	@if (upcomingMeal()) {
+		<div class="tomorrow-meal">
+			<span class="tomorrow-label">{{ upcomingMealLabel() }}</span>
+			<span class="tomorrow-name">{{ upcomingMeal() }}</span>
+		</div>
+	}
 </div>

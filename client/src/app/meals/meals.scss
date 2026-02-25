@@ -1,7 +1,6 @@
 .meal-plan-page {
   min-height: 100vh;
   padding: 1rem;
-  max-width: 600px;
   margin: 0 auto;
   font-family: var(--wp--preset--font-family--body-font);
   color: var(--wp--preset--color--dark);
@@ -76,6 +75,7 @@
 
   .meal-name {
     font-size: 1rem;
+    line-height: 2rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
