@@ -1,10 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { interval } from 'rxjs';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
 
 const NAME_STORAGE_KEY = 'meal_suggested_by';
 const SUCCESS_RESET_MS = 3000;
+const PLAN_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 
 @Component({
   selector: 'app-meals',
@@ -15,6 +18,7 @@ const SUCCESS_RESET_MS = 3000;
 })
 export class MealsComponent implements OnInit, OnDestroy {
   private mealService = inject(MealService);
+  private destroyRef = inject(DestroyRef);
 
   plan = signal<MealPlanDay[]>([]);
   loading = signal(true);
@@ -44,6 +48,12 @@ export class MealsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPlan();
+
+    // Refresh the meal plan every 30 minutes
+    interval(PLAN_REFRESH_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadPlan());
+
     const savedName = localStorage.getItem(NAME_STORAGE_KEY);
     if (savedName) {
       this.suggestName.set(savedName);

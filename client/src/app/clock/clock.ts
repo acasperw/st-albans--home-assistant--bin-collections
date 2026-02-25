@@ -1,6 +1,10 @@
-import { Component, OnInit, OnDestroy, signal, computed, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, input, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { interval } from 'rxjs';
 import { WeatherBadgeComponent } from '../shared/components/weather-badge/weather-badge.component';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
+
+const MEAL_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 
 @Component({
   selector: 'app-clock',
@@ -11,6 +15,7 @@ import { MealService, MealPlanDay } from '../shared/services/meal.service';
 })
 export class Clock implements OnInit, OnDestroy {
   private mealService = inject(MealService);
+  private destroyRef = inject(DestroyRef);
   private secondTimer: ReturnType<typeof setInterval> | null = null;
   private now = signal(new Date());
   private mealPlan = signal<MealPlanDay[]>([]);
@@ -49,6 +54,11 @@ export class Clock implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.alignAndStartSecondTicks();
     this.loadTomorrowMeal();
+
+    // Refresh the meal plan every 30 minutes
+    interval(MEAL_REFRESH_MS)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadTomorrowMeal());
   }
 
   ngOnDestroy(): void {
