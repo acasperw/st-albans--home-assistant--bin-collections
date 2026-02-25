@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { IdleService } from './shared/services/idle.service';
 import { Clock } from './clock/clock';
 import { BarcodeListenerService } from './shared/services/barcode-listener.service';
@@ -20,6 +21,7 @@ import { NotificationWrapperComponent } from './shared/components/notification-w
 export class App {
 
   protected idle = inject(IdleService);
+  private router = inject(Router);
   private barcodeService = inject(BarcodeListenerService);
   private notificationService = inject(NotificationService);
   private binNotificationService = inject(BinCollectionNotificationService);
@@ -27,6 +29,14 @@ export class App {
   constructor() {
     // Start monitoring for bin collection reminders
     this.binNotificationService.startMonitoring();
+
+    // Track route changes to show/hide cursor
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      const isMealsRoute = event.urlAfterRedirects.startsWith('/meals');
+      document.body.classList.toggle('meals-route', isMealsRoute);
+    });
 
     // React to barcode scans globally
     effect(() => {

@@ -1,0 +1,229 @@
+<div class="admin-page">
+  @if (!authenticated()) {
+    <!-- Login gate -->
+    <div class="login-card">
+      <h1>🔒 Meal Admin</h1>
+      <form (submit)="onLogin($event)" class="login-form">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="Enter admin password"
+          [value]="passwordInput()"
+          (input)="passwordInput.set(asInputValue($event))"
+          required
+        />
+        @if (loginError()) {
+          <p class="form-error">{{ loginError() }}</p>
+        }
+        <button type="submit" [disabled]="loggingIn()">
+          {{ loggingIn() ? 'Checking...' : 'Log in' }}
+        </button>
+      </form>
+    </div>
+  } @else {
+    <!-- Admin dashboard -->
+    <header class="admin-header">
+      <h1>🍽️ Meal Admin</h1>
+      <button class="btn-link" (click)="onLogout()">Log out</button>
+    </header>
+
+    <!-- Tab bar -->
+    <nav class="tab-bar">
+      <button [class.active]="activeTab() === 'plan'" (click)="activeTab.set('plan')">Plan</button>
+      <button [class.active]="activeTab() === 'suggestions'" (click)="activeTab.set('suggestions')">
+        Suggestions
+        @if (pendingCount() > 0) {
+          <span class="badge">{{ pendingCount() }}</span>
+        }
+      </button>
+      <button [class.active]="activeTab() === 'library'" (click)="activeTab.set('library')">Library</button>
+    </nav>
+
+    <!-- Plan tab -->
+    @if (activeTab() === 'plan') {
+      <section class="tab-content">
+        @if (planLoading()) {
+          <div class="loading"><div class="spinner"></div></div>
+        } @else {
+          <ul class="day-list">
+            @for (day of plan(); track day.date) {
+              <li class="day-card-admin">
+                <div class="day-info">
+                  <span class="day-name">{{ day.dayName }}</span>
+                  <span class="day-date">{{ day.date }}</span>
+                </div>
+
+                @if (editingDate() === day.date) {
+                  <!-- Edit mode -->
+                  <div class="edit-row">
+                    <input
+                      list="meal-library-list"
+                      type="text"
+                      placeholder="Meal name"
+                      [value]="editMealName()"
+                      (input)="onEditMealInput(asInputValue($event))"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Notes (optional)"
+                      [value]="editNotes()"
+                      (input)="editNotes.set(asInputValue($event))"
+                    />
+
+                    @if (planExactMatch()) {
+                      <div class="plan-match-prompt exact">
+                        <p><strong>{{ planExactMatch() }}</strong> is already in the library. Use it?</p>
+                        <div class="plan-match-actions">
+                          <button class="btn-save" (click)="onPlanAcceptMatch()" [disabled]="savingPlan()">Yes, use it</button>
+                          <button class="btn-cancel" (click)="onPlanDismissMatch()">Cancel</button>
+                        </div>
+                      </div>
+                    }
+
+                    @if (planNearMatch()) {
+                      <div class="plan-match-prompt near">
+                        <p>Did you mean <strong>{{ planNearMatch() }}</strong>?</p>
+                        <div class="plan-match-actions">
+                          <button class="btn-save" (click)="onPlanAcceptMatch()" [disabled]="savingPlan()">Yes, use it</button>
+                          <button class="btn-cancel" (click)="onPlanForceCustom()" [disabled]="savingPlan()">No, keep "{{ editMealName() }}"</button>
+                        </div>
+                      </div>
+                    }
+
+                    @if (!planExactMatch() && !planNearMatch()) {
+                      <div class="edit-actions">
+                        <button class="btn-save" (click)="onSavePlan(day.date)" [disabled]="savingPlan()">Save</button>
+                        <button class="btn-cancel" (click)="editingDate.set(null)">Cancel</button>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <!-- Display mode -->
+                  <div class="day-meal-admin">
+                    @if (day.entry) {
+                      <span class="meal-name">{{ day.entry.meal_name }}</span>
+                      <div class="entry-actions">
+                        <button class="btn-icon" title="Edit" (click)="onEditDay(day)">✏️</button>
+                        <button class="btn-icon" title="Remove" (click)="onRemovePlan(day.entry!.id)">🗑️</button>
+                      </div>
+                    } @else {
+                      <button class="btn-add" (click)="onEditDay(day)">+ Add meal</button>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+
+          <!-- Hidden datalist for autocomplete from library -->
+          <datalist id="meal-library-list">
+            @for (meal of library(); track meal.id) {
+              <option [value]="meal.name"></option>
+            }
+          </datalist>
+        }
+      </section>
+    }
+
+    <!-- Suggestions tab -->
+    @if (activeTab() === 'suggestions') {
+      <section class="tab-content">
+        @if (suggestionsLoading()) {
+          <div class="loading"><div class="spinner"></div></div>
+        } @else if (suggestions().length === 0) {
+          <p class="empty-state">No suggestions yet.</p>
+        } @else {
+          <ul class="suggestion-list">
+            @for (s of suggestions(); track s.id) {
+              <li class="suggestion-card" [class.pending]="s.status === 'pending'" [class.accepted]="s.status === 'accepted'" [class.dismissed]="s.status === 'dismissed'">
+                <div class="suggestion-info">
+                  <span class="suggestion-meal">{{ s.meal_name }}</span>
+                  <span class="suggestion-by">suggested by {{ s.suggested_by }}</span>
+                </div>
+                @if (s.status === 'pending') {
+                  <div class="suggestion-actions">
+                    <button class="btn-accept" (click)="onSuggestionAction(s.id, 'accepted')">✓ Accept</button>
+                    <button class="btn-dismiss" (click)="onSuggestionAction(s.id, 'dismissed')">✗ Dismiss</button>
+                  </div>
+                } @else {
+                  <span class="suggestion-status">{{ s.status }}</span>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+
+    <!-- Library tab -->
+    @if (activeTab() === 'library') {
+      <section class="tab-content">
+        <form (submit)="onAddToLibrary($event)" class="add-meal-form">
+          <input
+            type="text"
+            placeholder="New meal name"
+            [value]="newMealName()"
+            (input)="newMealName.set(asInputValue($event))"
+            required
+          />
+          <button type="submit" [disabled]="addingMeal()">+ Add</button>
+        </form>
+
+        @if (libraryError()) {
+          <p class="form-error">{{ libraryError() }}</p>
+        }
+
+        @if (libraryExactMatch()) {
+          <div class="library-match-prompt exact">
+            <p><strong>{{ libraryExactMatch() }}</strong> is already in the library.</p>
+            <button class="btn-cancel" (click)="onLibraryDismissMatch()">OK</button>
+          </div>
+        }
+
+        @if (libraryNearMatch()) {
+          <div class="library-match-prompt near">
+            <p>Did you mean <strong>{{ libraryNearMatch() }}</strong>?</p>
+            <div class="near-match-actions">
+              <button class="btn-save" (click)="onLibraryAcceptMatch()">Yes, it's the same</button>
+              <button class="btn-cancel" (click)="onLibraryForceAdd()" [disabled]="addingMeal()">No, add "{{ libraryOriginal() }}"</button>
+            </div>
+          </div>
+        }
+
+        @if (library().length === 0) {
+          <p class="empty-state">No meals in the library yet. Add one above or accept a suggestion.</p>
+        } @else {
+          <ul class="library-list">
+            @for (meal of library(); track meal.id) {
+              <li class="library-item" [class.requested]="meal.times_requested > 0">
+                <div class="library-item-info">
+                  <span class="library-item-name">
+                    @if (meal.times_requested > 0) {
+                      🔥
+                    }
+                    {{ meal.name }}
+                  </span>
+                  <span class="library-item-stats">
+                    @if (meal.times_requested > 0) {
+                      Requested {{ meal.times_requested }}× this week ·
+                    }
+                    @if (meal.times_planned > 0) {
+                      Planned {{ meal.times_planned }}×
+                      @if (meal.last_planned) {
+                        · last {{ meal.last_planned }}
+                      }
+                    } @else {
+                      Never planned
+                    }
+                  </span>
+                </div>
+                <button class="btn-icon" title="Delete" (click)="onDeleteMeal(meal.id)">🗑️</button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

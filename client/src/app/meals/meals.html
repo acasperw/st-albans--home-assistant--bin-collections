@@ -1,0 +1,102 @@
+<div class="meal-plan-page">
+  <header class="meal-header">
+    <h1>🍽️ Dinner This Week</h1>
+  </header>
+
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading meal plan...</p>
+    </div>
+  } @else if (error()) {
+    <div class="api-error">
+      <strong>Oops</strong>
+      {{ error() }}
+    </div>
+  } @else {
+    <ul class="day-list">
+      @for (day of plan(); track day.date) {
+        <li class="day-card" [class.has-meal]="!!day.entry" [class.is-today]="day.date === todayStr()">
+          <div class="day-label">
+            <span class="day-name">{{ day.dayName }}</span>
+            <span class="day-date">{{ day.date | date:'d MMM' }}</span>
+          </div>
+          <div class="day-meal">
+            @if (day.entry) {
+              <span class="meal-name">{{ day.entry.meal_name }}</span>
+              @if (day.entry.notes) {
+                <span class="meal-notes">{{ day.entry.notes }}</span>
+              }
+            } @else {
+              <span class="no-meal">Not planned yet</span>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <section class="suggest-section">
+    <h2>Suggest a meal</h2>
+
+    @if (suggestionSent()) {
+      <div class="success-message">
+        ✅ Thanks, {{ lastSuggestedBy() }}! Your suggestion has been sent.
+      </div>
+    } @else if (requestedMealName()) {
+      <div class="success-message request-message">
+        👍 Nice one, {{ lastSuggestedBy() }}! We know you fancy <strong>{{ requestedMealName() }}</strong> — noted!
+      </div>
+    } @else if (exactMatch()) {
+      <div class="exact-match-prompt">
+        <p><strong>{{ exactMatch() }}</strong> has already been suggested by someone else! Try something different.</p>
+        <button class="btn-keep-original" (click)="exactMatch.set(null)">OK</button>
+      </div>
+    } @else if (nearMatch()) {
+      <div class="near-match-prompt">
+        <p>Did you mean <strong>{{ nearMatch() }}</strong>?</p>
+        <div class="near-match-actions">
+          <button class="btn-accept-match" (click)="onAcceptMatch()" [disabled]="submitting()">
+            Yes, use "{{ nearMatch() }}"
+          </button>
+          <button class="btn-keep-original" (click)="onKeepOriginal()" [disabled]="submitting()">
+            No, keep "{{ nearMatchOriginal() }}"
+          </button>
+        </div>
+      </div>
+    } @else {
+      @if (rejectionMessage()) {
+        <div class="rejection-message">
+          🚫 {{ rejectionMessage() }}
+        </div>
+      }
+      <form (submit)="onSuggest($event)" class="suggest-form">
+        <label for="mealName">What meal?</label>
+        <input
+          id="mealName"
+          type="text"
+          placeholder="e.g. Spaghetti Bolognese"
+          [value]="suggestMealName()"
+          (input)="suggestMealName.set(asInputValue($event))"
+          required
+        />
+
+        <label for="suggestedBy">Your name</label>
+        <input
+          id="suggestedBy"
+          type="text"
+          placeholder="e.g. Alex"
+          [value]="suggestName()"
+          (input)="onNameInput($event)"
+          required
+        />
+
+        <button type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Sending...' : 'Send suggestion' }}
+        </button>
+      </form>
+    }
+  </section>
+
+  <footer class="meal-footer"></footer>
+</div>

@@ -57,7 +57,7 @@ export class BarcodeListenerService implements OnDestroy {
     }
 
     // Ignore non-printable keys and modifier combinations
-    if (e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) {
+    if (!e.key || e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) {
       return;
     }
 
