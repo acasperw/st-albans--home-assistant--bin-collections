@@ -52,6 +52,16 @@ export class MealAdminComponent implements OnInit {
   libraryExactMatch = signal<string | null>(null);
   libraryOriginal = signal<string | null>(null);
 
+  // Library rename
+  renamingMealId = signal<number | null>(null);
+  renameInput = signal('');
+  renameError = signal<string | null>(null);
+  renameSaving = signal(false);
+
+  // Suggestion editing (edit name before accepting)
+  editingSuggestionId = signal<number | null>(null);
+  editSuggestionName = signal('');
+
   ngOnInit(): void {
     // Check if already authenticated
     if (this.mealService.isAuthenticated()) {
@@ -234,13 +244,46 @@ export class MealAdminComponent implements OnInit {
 
   // ── Suggestions ──
 
+  /** Start editing a suggestion's name before accepting */
+  onStartEditSuggestion(s: Suggestion): void {
+    this.editingSuggestionId.set(s.id);
+    this.editSuggestionName.set(s.meal_name);
+  }
+
+  /** Cancel the edit-before-accept flow */
+  onCancelEditSuggestion(): void {
+    this.editingSuggestionId.set(null);
+    this.editSuggestionName.set('');
+  }
+
+  /** Confirm accept (with possibly edited name) */
+  onConfirmAcceptSuggestion(id: number): void {
+    const editedName = this.editSuggestionName().trim();
+    if (!editedName) return;
+
+    this.mealService.updateSuggestion(id, 'accepted', editedName).subscribe({
+      next: () => {
+        this.editingSuggestionId.set(null);
+        this.editSuggestionName.set('');
+        this.loadSuggestions();
+        this.loadLibrary();
+      },
+    });
+  }
+
   onSuggestionAction(id: number, status: 'accepted' | 'dismissed'): void {
+    if (status === 'accepted') {
+      // Delegate to the edit-before-accept flow
+      const suggestion = this.suggestions().find(s => s.id === id);
+      if (suggestion) {
+        this.onStartEditSuggestion(suggestion);
+      }
+      return;
+    }
+
     this.mealService.updateSuggestion(id, status).subscribe({
       next: () => {
         this.loadSuggestions();
-        if (status === 'accepted') {
-          this.loadLibrary(); // Refresh library since accepted suggestions are added
-        }
       },
     });
   }
@@ -323,6 +366,45 @@ export class MealAdminComponent implements OnInit {
   onDeleteMeal(id: number): void {
     this.mealService.deleteFromLibrary(id).subscribe({
       next: () => this.loadLibrary(),
+    });
+  }
+
+  // ── Library rename ──
+
+  onStartRename(meal: Meal): void {
+    this.renamingMealId.set(meal.id);
+    this.renameInput.set(meal.name);
+    this.renameError.set(null);
+  }
+
+  onCancelRename(): void {
+    this.renamingMealId.set(null);
+    this.renameInput.set('');
+    this.renameError.set(null);
+  }
+
+  onConfirmRename(id: number): void {
+    const name = this.renameInput().trim();
+    if (!name) return;
+
+    this.renameSaving.set(true);
+    this.renameError.set(null);
+
+    this.mealService.renameInLibrary(id, name).subscribe({
+      next: () => {
+        this.renamingMealId.set(null);
+        this.renameInput.set('');
+        this.renameSaving.set(false);
+        this.loadLibrary();
+      },
+      error: (err) => {
+        this.renameSaving.set(false);
+        if (err.status === 409) {
+          this.renameError.set('A meal with that name already exists.');
+        } else {
+          this.renameError.set('Failed to rename meal.');
+        }
+      },
     });
   }
 

@@ -410,6 +410,36 @@
   color: #888;
 }
 
+.suggestion-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+
+  .suggestion-by {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  input {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    &:focus {
+      outline: none;
+      border-color: var(--wp--preset--color--secondary);
+    }
+  }
+
+  .suggestion-edit-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
 // ── Library tab ──
 
 .add-meal-form {
@@ -487,6 +517,36 @@
 .library-item-stats {
   font-size: 0.75rem;
   color: #888;
+}
+
+.library-item-actions {
+  display: flex;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.library-rename {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+
+  input {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.95rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--wp--preset--color--secondary);
+    }
+  }
+
+  .library-rename-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
 }
 
 // ── Library match prompts ──

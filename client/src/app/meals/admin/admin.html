@@ -137,17 +137,34 @@
           <ul class="suggestion-list">
             @for (s of suggestions(); track s.id) {
               <li class="suggestion-card" [class.pending]="s.status === 'pending'" [class.accepted]="s.status === 'accepted'" [class.dismissed]="s.status === 'dismissed'">
-                <div class="suggestion-info">
-                  <span class="suggestion-meal">{{ s.meal_name }}</span>
-                  <span class="suggestion-by">suggested by {{ s.suggested_by }}</span>
-                </div>
-                @if (s.status === 'pending') {
-                  <div class="suggestion-actions">
-                    <button class="btn-accept" (click)="onSuggestionAction(s.id, 'accepted')">✓ Accept</button>
-                    <button class="btn-dismiss" (click)="onSuggestionAction(s.id, 'dismissed')">✗ Dismiss</button>
+                @if (editingSuggestionId() === s.id) {
+                  <!-- Edit-before-accept mode -->
+                  <div class="suggestion-edit">
+                    <span class="suggestion-by">suggested by {{ s.suggested_by }}</span>
+                    <input
+                      type="text"
+                      [value]="editSuggestionName()"
+                      (input)="editSuggestionName.set(asInputValue($event))"
+                      placeholder="Meal name"
+                    />
+                    <div class="suggestion-edit-actions">
+                      <button class="btn-accept" (click)="onConfirmAcceptSuggestion(s.id)">✓ Add to library</button>
+                      <button class="btn-cancel" (click)="onCancelEditSuggestion()">Cancel</button>
+                    </div>
                   </div>
                 } @else {
-                  <span class="suggestion-status">{{ s.status }}</span>
+                  <div class="suggestion-info">
+                    <span class="suggestion-meal">{{ s.meal_name }}</span>
+                    <span class="suggestion-by">suggested by {{ s.suggested_by }}</span>
+                  </div>
+                  @if (s.status === 'pending') {
+                    <div class="suggestion-actions">
+                      <button class="btn-accept" (click)="onSuggestionAction(s.id, 'accepted')">✓ Accept</button>
+                      <button class="btn-dismiss" (click)="onSuggestionAction(s.id, 'dismissed')">✗ Dismiss</button>
+                    </div>
+                  } @else {
+                    <span class="suggestion-status">{{ s.status }}</span>
+                  }
                 }
               </li>
             }
@@ -197,28 +214,50 @@
           <ul class="library-list">
             @for (meal of library(); track meal.id) {
               <li class="library-item" [class.requested]="meal.times_requested > 0">
-                <div class="library-item-info">
-                  <span class="library-item-name">
-                    @if (meal.times_requested > 0) {
-                      🔥
+                @if (renamingMealId() === meal.id) {
+                  <!-- Rename mode -->
+                  <div class="library-rename">
+                    <input
+                      type="text"
+                      [value]="renameInput()"
+                      (input)="renameInput.set(asInputValue($event))"
+                      placeholder="Meal name"
+                    />
+                    @if (renameError()) {
+                      <p class="form-error">{{ renameError() }}</p>
                     }
-                    {{ meal.name }}
-                  </span>
-                  <span class="library-item-stats">
-                    @if (meal.times_requested > 0) {
-                      Requested {{ meal.times_requested }}× this week ·
-                    }
-                    @if (meal.times_planned > 0) {
-                      Planned {{ meal.times_planned }}×
-                      @if (meal.last_planned) {
-                        · last {{ meal.last_planned }}
+                    <div class="library-rename-actions">
+                      <button class="btn-save" (click)="onConfirmRename(meal.id)" [disabled]="renameSaving()">Save</button>
+                      <button class="btn-cancel" (click)="onCancelRename()">Cancel</button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="library-item-info">
+                    <span class="library-item-name">
+                      @if (meal.times_requested > 0) {
+                        🔥
                       }
-                    } @else {
-                      Never planned
-                    }
-                  </span>
-                </div>
-                <button class="btn-icon" title="Delete" (click)="onDeleteMeal(meal.id)">🗑️</button>
+                      {{ meal.name }}
+                    </span>
+                    <span class="library-item-stats">
+                      @if (meal.times_requested > 0) {
+                        Requested {{ meal.times_requested }}× this week ·
+                      }
+                      @if (meal.times_planned > 0) {
+                        Planned {{ meal.times_planned }}×
+                        @if (meal.last_planned) {
+                          · last {{ meal.last_planned }}
+                        }
+                      } @else {
+                        Never planned
+                      }
+                    </span>
+                  </div>
+                  <div class="library-item-actions">
+                    <button class="btn-icon" title="Rename" (click)="onStartRename(meal)">✏️</button>
+                    <button class="btn-icon" title="Delete" (click)="onDeleteMeal(meal.id)">🗑️</button>
+                  </div>
+                }
               </li>
             }
           </ul>

@@ -138,8 +138,8 @@ export class MealService {
     });
   }
 
-  updateSuggestion(id: number, status: 'accepted' | 'dismissed'): Observable<Suggestion> {
-    return this.http.put<Suggestion>(`${this.baseUrl}/suggestions/${id}`, { status }, {
+  updateSuggestion(id: number, status: 'accepted' | 'dismissed', name?: string): Observable<Suggestion> {
+    return this.http.put<Suggestion>(`${this.baseUrl}/suggestions/${id}`, { status, name }, {
       headers: this.authHeaders(),
     });
   }
@@ -158,6 +158,12 @@ export class MealService {
 
   deleteFromLibrary(id: number): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean }>(`${this.baseUrl}/library/${id}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  renameInLibrary(id: number, name: string): Observable<Meal> {
+    return this.http.patch<Meal>(`${this.baseUrl}/library/${id}`, { name }, {
       headers: this.authHeaders(),
     });
   }

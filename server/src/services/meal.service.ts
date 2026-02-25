@@ -137,6 +137,13 @@ export function addMeal(name: string, description?: string): Meal {
   return getDb().prepare('SELECT * FROM meals WHERE id = ?').get(result.lastInsertRowid) as Meal;
 }
 
+export function renameMeal(id: number, newName: string): Meal | undefined {
+  const stmt = getDb().prepare('UPDATE meals SET name = ? WHERE id = ?');
+  const result = stmt.run(newName, id);
+  if (result.changes === 0) return undefined;
+  return getDb().prepare('SELECT * FROM meals WHERE id = ?').get(id) as Meal;
+}
+
 export function deleteMeal(id: number): boolean {
   const result = getDb().prepare('DELETE FROM meals WHERE id = ?').run(id);
   return result.changes > 0;
@@ -327,10 +334,16 @@ export function findExactPendingMatch(input: string): string | null {
   return pendingNames.find(n => n.toLowerCase() === normalized) ?? null;
 }
 
-export function updateSuggestionStatus(id: number, status: 'accepted' | 'dismissed'): Suggestion | undefined {
-  const stmt = getDb().prepare('UPDATE suggestions SET status = ? WHERE id = ?');
-  const result = stmt.run(status, id);
-  if (result.changes === 0) return undefined;
+export function updateSuggestionStatus(id: number, status: 'accepted' | 'dismissed', newName?: string): Suggestion | undefined {
+  if (newName) {
+    const updateName = getDb().prepare('UPDATE suggestions SET meal_name = ?, status = ? WHERE id = ?');
+    const result = updateName.run(newName, status, id);
+    if (result.changes === 0) return undefined;
+  } else {
+    const stmt = getDb().prepare('UPDATE suggestions SET status = ? WHERE id = ?');
+    const result = stmt.run(status, id);
+    if (result.changes === 0) return undefined;
+  }
   return getDb().prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as Suggestion;
 }
 

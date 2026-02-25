@@ -4,6 +4,7 @@ import {
   getMealsWithStats,
   addMeal,
   deleteMeal,
+  renameMeal,
   getMealPlan,
   setMealPlanEntry,
   deleteMealPlanEntry,
@@ -201,7 +202,7 @@ mealRouter.get('/meals/suggestions', requireAdmin, (req: Request, res: Response)
 mealRouter.put('/meals/suggestions/:id', requireAdmin, (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const { status } = req.body as { status?: string };
+    const { status, name } = req.body as { status?: string; name?: string };
 
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid suggestion ID' });
@@ -213,7 +214,10 @@ mealRouter.put('/meals/suggestions/:id', requireAdmin, (req: Request, res: Respo
       return;
     }
 
-    const updated = updateSuggestionStatus(id, status);
+    // Normalize the overridden name if provided
+    const finalName = name?.trim() ? normalizeMealName(name) : undefined;
+
+    const updated = updateSuggestionStatus(id, status, finalName);
     if (!updated) {
       res.status(404).json({ error: 'Suggestion not found' });
       return;
@@ -304,6 +308,40 @@ mealRouter.delete('/meals/library/:id', requireAdmin, (req: Request, res: Respon
   } catch (error) {
     console.error('Error deleting meal:', error);
     res.status(500).json({ error: 'Failed to delete meal' });
+  }
+});
+
+// PATCH /meals/library/:id — rename a meal (admin)
+mealRouter.patch('/meals/library/:id', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params['id'] ?? '', 10);
+    const { name } = req.body as { name?: string };
+
+    if (isNaN(id)) {
+      res.status(400).json({ error: 'Invalid meal ID' });
+      return;
+    }
+
+    if (!name?.trim()) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+
+    const normalized = normalizeMealName(name);
+    const renamed = renameMeal(id, normalized);
+    if (!renamed) {
+      res.status(404).json({ error: 'Meal not found' });
+      return;
+    }
+
+    res.json(renamed);
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('UNIQUE')) {
+      res.status(409).json({ error: 'A meal with that name already exists' });
+      return;
+    }
+    console.error('Error renaming meal:', error);
+    res.status(500).json({ error: 'Failed to rename meal' });
   }
 });
 
