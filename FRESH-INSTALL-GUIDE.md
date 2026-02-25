@@ -196,7 +196,50 @@ journalctl -u st-albans -f
 
 ---
 
-## 11. Configure Chromium Kiosk Mode
+## 11. Optional: Nginx Reverse Proxy (Access Without :3000)
+
+This allows access via `http://park-street-pi.local/` by proxying port 80 to the app on port 3000.
+
+### Install Nginx
+```bash
+sudo apt-get install -y nginx
+```
+
+### Create Nginx Site
+```bash
+sudo nano /etc/nginx/sites-available/st-albans
+```
+
+Paste:
+```nginx
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+	server_name _;
+
+	location / {
+		proxy_pass http://localhost:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection 'upgrade';
+		proxy_set_header Host $host;
+		proxy_cache_bypass $http_upgrade;
+	}
+}
+```
+
+### Enable Site
+```bash
+sudo ln -s /etc/nginx/sites-available/st-albans /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl enable nginx
+sudo systemctl restart nginx
+```
+
+---
+
+## 12. Configure Chromium Kiosk Mode
 
 ### Create User Systemd Service
 
@@ -237,7 +280,7 @@ journalctl --user -u chromium-kiosk.service -f
 
 ---
 
-## 12. Optional: Smart Kiosk Wrapper (Waits for Backend)
+## 13. Optional: Smart Kiosk Wrapper (Waits for Backend)
 
 This ensures Chromium doesn't start until the backend API is ready:
 
@@ -279,7 +322,7 @@ systemctl --user restart chromium-kiosk.service
 
 ---
 
-## 13. Optional: Network Watchdog (Auto-Reconnect on Loss)
+## 14. Optional: Network Watchdog (Auto-Reconnect on Loss)
 
 To automatically restore network connectivity when Wi-Fi/Ethernet drops:
 
@@ -304,7 +347,7 @@ sudo tail -f /var/log/network-watchdog.log
 
 ---
 
-## 14. Optional: Automatic Screen Brightness Control
+## 15. Optional: Automatic Screen Brightness Control
 
 If your display supports brightness control via `/sys/class/backlight/11-0045/brightness` (range 0-31):
 
@@ -341,7 +384,7 @@ systemctl list-timers --all | grep brightness
 
 ---
 
-## 15. Reboot and Verify
+## 16. Reboot and Verify
 
 ```bash
 sudo reboot
@@ -354,7 +397,7 @@ After reboot:
 
 ---
 
-## 16. Future Updates
+## 17. Future Updates
 
 When you need to update the app after code changes:
 
@@ -374,7 +417,7 @@ sudo systemctl restart st-albans
 
 ---
 
-## 17. Useful Commands
+## 18. Useful Commands
 
 ### Service Management
 ```bash
@@ -443,7 +486,7 @@ sudo ip link set wlan0 up
 
 ---
 
-## 18. Troubleshooting
+## 19. Troubleshooting
 
 ### Service Won't Start
 ```bash
@@ -495,6 +538,7 @@ chmod +x deploy/*.sh
 
 - [ ] Brightness timers installed (optional)
 - [ ] Network watchdog installed (optional but recommended)
+- [ ] Nginx reverse proxy configured (optional)
 - [ ] System rebooted and verified
 - [ ] System updated
 - [ ] Hostname set (optional)
