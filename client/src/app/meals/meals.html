@@ -43,9 +43,13 @@
       <div class="success-message">
         ✅ Thanks, {{ lastSuggestedBy() }}! Your suggestion has been sent.
       </div>
+    } @else if (requestedMealName()) {
+      <div class="success-message request-message">
+        👍 Nice one, {{ lastSuggestedBy() }}! We know you fancy <strong>{{ requestedMealName() }}</strong> — noted!
+      </div>
     } @else if (exactMatch()) {
       <div class="exact-match-prompt">
-        <p><strong>{{ exactMatch() }}</strong> is already on the list! Try suggesting something else.</p>
+        <p><strong>{{ exactMatch() }}</strong> has already been suggested by someone else! Try something different.</p>
         <button class="btn-keep-original" (click)="exactMatch.set(null)">OK</button>
       </div>
     } @else if (nearMatch()) {

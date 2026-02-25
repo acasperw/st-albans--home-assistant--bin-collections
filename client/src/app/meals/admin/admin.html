@@ -196,10 +196,18 @@
         } @else {
           <ul class="library-list">
             @for (meal of library(); track meal.id) {
-              <li class="library-item">
+              <li class="library-item" [class.requested]="meal.times_requested > 0">
                 <div class="library-item-info">
-                  <span class="library-item-name">{{ meal.name }}</span>
+                  <span class="library-item-name">
+                    @if (meal.times_requested > 0) {
+                      🔥
+                    }
+                    {{ meal.name }}
+                  </span>
                   <span class="library-item-stats">
+                    @if (meal.times_requested > 0) {
+                      Requested {{ meal.times_requested }}× this week ·
+                    }
                     @if (meal.times_planned > 0) {
                       Planned {{ meal.times_planned }}×
                       @if (meal.last_planned) {

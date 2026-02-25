@@ -75,6 +75,14 @@ function initSchema(): void {
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'dismissed')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS meal_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      meal_id INTEGER NOT NULL,
+      requested_by TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE
+    );
   `);
 }
 
@@ -88,13 +96,14 @@ function getDbRaw(): Database.Database {
 export interface MealWithStats extends Meal {
   times_planned: number;
   last_planned: string | null;
+  times_requested: number;
 }
 
 export function getAllMeals(): Meal[] {
   return getDb().prepare('SELECT * FROM meals ORDER BY name COLLATE NOCASE').all() as Meal[];
 }
 
-/** Return every library meal enriched with plan-frequency stats */
+/** Return every library meal enriched with plan-frequency and request stats */
 export function getMealsWithStats(): MealWithStats[] {
   return getDb().prepare(`
     SELECT
@@ -103,7 +112,8 @@ export function getMealsWithStats(): MealWithStats[] {
       m.description,
       m.created_at,
       COALESCE(ps.times_planned, 0) AS times_planned,
-      ps.last_planned
+      ps.last_planned,
+      COALESCE(rq.times_requested, 0) AS times_requested
     FROM meals m
     LEFT JOIN (
       SELECT meal_id, COUNT(*) AS times_planned, MAX(date) AS last_planned
@@ -111,7 +121,13 @@ export function getMealsWithStats(): MealWithStats[] {
       WHERE meal_id IS NOT NULL
       GROUP BY meal_id
     ) ps ON ps.meal_id = m.id
-    ORDER BY times_planned DESC, m.name COLLATE NOCASE
+    LEFT JOIN (
+      SELECT meal_id, COUNT(*) AS times_requested
+      FROM meal_requests
+      WHERE created_at >= datetime('now', '-7 days')
+      GROUP BY meal_id
+    ) rq ON rq.meal_id = m.id
+    ORDER BY times_requested DESC, times_planned DESC, m.name COLLATE NOCASE
   `).all() as MealWithStats[];
 }
 
@@ -288,11 +304,80 @@ export function findExactMatch(input: string): string | null {
   return allNames.find(n => n.toLowerCase() === normalized) ?? null;
 }
 
+export interface LibraryMatch {
+  id: number;
+  name: string;
+}
+
+/** Check if the meal exists specifically in the library (not just pending suggestions) */
+export function findExactLibraryMatch(input: string): LibraryMatch | null {
+  const normalized = normalizeMealName(input).toLowerCase();
+  const meal = getAllMeals().find(m => m.name.toLowerCase() === normalized);
+  return meal ? { id: meal.id, name: meal.name } : null;
+}
+
+/** Check if the meal exists only in pending suggestions (not in the library) */
+export function findExactPendingMatch(input: string): string | null {
+  const normalized = normalizeMealName(input).toLowerCase();
+
+  // If it's already in the library, it's not a pending-only match
+  if (findExactLibraryMatch(input)) return null;
+
+  const pendingNames = getPendingSuggestions().map(s => s.meal_name);
+  return pendingNames.find(n => n.toLowerCase() === normalized) ?? null;
+}
+
 export function updateSuggestionStatus(id: number, status: 'accepted' | 'dismissed'): Suggestion | undefined {
   const stmt = getDb().prepare('UPDATE suggestions SET status = ? WHERE id = ?');
   const result = stmt.run(status, id);
   if (result.changes === 0) return undefined;
   return getDb().prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as Suggestion;
+}
+
+// ── Meal Requests (votes for existing library meals) ──
+
+export interface MealRequest {
+  id: number;
+  meal_id: number;
+  requested_by: string;
+  created_at: string;
+}
+
+export interface MealRequestResult {
+  success: boolean;
+  reason?: string;
+}
+
+/**
+ * Record a request (vote) for an existing library meal.
+ * Returns { success: false, reason } if the same person already requested this meal today.
+ */
+export function addMealRequest(mealId: number, requestedBy: string): MealRequestResult {
+  // Anti-spam: same person + same meal + same day
+  const today = new Date().toISOString().split('T')[0];
+  const existing = getDb().prepare(
+    "SELECT COUNT(*) as count FROM meal_requests WHERE meal_id = ? AND LOWER(requested_by) = LOWER(?) AND date(created_at) = ?"
+  ).get(mealId, requestedBy.trim(), today) as { count: number };
+
+  if (existing.count > 0) {
+    return { success: false, reason: "You've already requested this meal today — we got the message! 😊" };
+  }
+
+  // Purge old requests (older than 30 days)
+  purgeOldRequests();
+
+  getDb().prepare('INSERT INTO meal_requests (meal_id, requested_by) VALUES (?, ?)').run(mealId, requestedBy.trim());
+  return { success: true };
+}
+
+/** Delete requests older than 30 days */
+function purgeOldRequests(): void {
+  const result = getDb().prepare(
+    "DELETE FROM meal_requests WHERE created_at < datetime('now', '-30 days')"
+  ).run();
+  if (result.changes > 0) {
+    console.log(`Purged ${result.changes} old meal request(s)`);
+  }
 }
 
 // ── Suggestion validation ──

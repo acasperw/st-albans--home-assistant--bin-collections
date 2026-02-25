@@ -39,6 +39,9 @@ export class MealsComponent implements OnInit, OnDestroy {
   // Rejection message from server validation
   rejectionMessage = signal<string | null>(null);
 
+  // Meal request confirmation (existing library meal)
+  requestedMealName = signal<string | null>(null);
+
   ngOnInit(): void {
     this.loadPlan();
     const savedName = localStorage.getItem(NAME_STORAGE_KEY);
@@ -79,8 +82,15 @@ export class MealsComponent implements OnInit, OnDestroy {
     this.rejectionMessage.set(null);
     this.mealService.submitSuggestion(mealName, name).subscribe({
       next: (res) => {
-        if (res.exactMatch) {
-          // Meal already exists — inform user
+        if (res.requested) {
+          // Library meal — request recorded successfully
+          this.requestedMealName.set(res.mealName ?? mealName);
+          this.lastSuggestedBy.set(name);
+          this.suggestMealName.set('');
+          this.submitting.set(false);
+          this.queueSuccessReset();
+        } else if (res.exactMatch) {
+          // Pending suggestion duplicate — inform user
           this.exactMatch.set(res.exactMatch);
           this.submitting.set(false);
         } else if (res.nearMatch) {
@@ -108,8 +118,27 @@ export class MealsComponent implements OnInit, OnDestroy {
 
     this.submitting.set(true);
     this.mealService.submitSuggestion(match, name, true).subscribe({
-      next: () => this.completeSuggestion(name),
-      error: () => this.submitting.set(false),
+      next: (res) => {
+        if (res.requested) {
+          this.requestedMealName.set(res.mealName ?? match);
+          this.lastSuggestedBy.set(name);
+          this.suggestMealName.set('');
+          this.nearMatch.set(null);
+          this.nearMatchOriginal.set(null);
+          this.submitting.set(false);
+          this.queueSuccessReset();
+        } else {
+          this.completeSuggestion(name);
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 422 && err.error?.error) {
+          this.rejectionMessage.set(err.error.error);
+          this.nearMatch.set(null);
+          this.nearMatchOriginal.set(null);
+        }
+        this.submitting.set(false);
+      },
     });
   }
 
@@ -120,8 +149,27 @@ export class MealsComponent implements OnInit, OnDestroy {
 
     this.submitting.set(true);
     this.mealService.submitSuggestion(original, name, true).subscribe({
-      next: () => this.completeSuggestion(name),
-      error: () => this.submitting.set(false),
+      next: (res) => {
+        if (res.requested) {
+          this.requestedMealName.set(res.mealName ?? original);
+          this.lastSuggestedBy.set(name);
+          this.suggestMealName.set('');
+          this.nearMatch.set(null);
+          this.nearMatchOriginal.set(null);
+          this.submitting.set(false);
+          this.queueSuccessReset();
+        } else {
+          this.completeSuggestion(name);
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 422 && err.error?.error) {
+          this.rejectionMessage.set(err.error.error);
+          this.nearMatch.set(null);
+          this.nearMatchOriginal.set(null);
+        }
+        this.submitting.set(false);
+      },
     });
   }
 
@@ -134,6 +182,7 @@ export class MealsComponent implements OnInit, OnDestroy {
     this.nearMatchOriginal.set(null);
     this.exactMatch.set(null);
     this.rejectionMessage.set(null);
+    this.requestedMealName.set(null);
     this.queueSuccessReset();
   }
 
@@ -154,6 +203,7 @@ export class MealsComponent implements OnInit, OnDestroy {
 
     this.resetTimerId = window.setTimeout(() => {
       this.suggestionSent.set(false);
+      this.requestedMealName.set(null);
       this.resetTimerId = null;
     }, SUCCESS_RESET_MS);
   }

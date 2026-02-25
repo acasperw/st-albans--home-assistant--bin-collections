@@ -13,6 +13,9 @@ import {
   normalizeMealName,
   findNearMatch,
   findExactMatch,
+  findExactLibraryMatch,
+  findExactPendingMatch,
+  addMealRequest,
   validateSuggestion
 } from '../services/meal.service';
 
@@ -101,11 +104,26 @@ mealRouter.post('/meals/suggestions', (req: Request, res: Response) => {
 
     // If client hasn't confirmed yet, check for exact and near matches
     if (!useExisting) {
-      // Exact match — meal already exists
-      const exact = findExactMatch(normalized);
-      if (exact) {
+      // Check if it's a library meal — record a request (vote) instead of rejecting
+      const libraryMatch = findExactLibraryMatch(normalized);
+      if (libraryMatch) {
+        const result = addMealRequest(libraryMatch.id, suggestedBy.trim());
+        if (!result.success) {
+          res.status(422).json({ error: result.reason });
+          return;
+        }
         res.status(200).json({
-          exactMatch: exact,
+          requested: true,
+          mealName: libraryMatch.name,
+        });
+        return;
+      }
+
+      // Check if it's a pending suggestion only — treat as duplicate
+      const pendingMatch = findExactPendingMatch(normalized);
+      if (pendingMatch) {
+        res.status(200).json({
+          exactMatch: pendingMatch,
           original: normalized,
         });
         return;
@@ -122,8 +140,21 @@ mealRouter.post('/meals/suggestions', (req: Request, res: Response) => {
       }
     }
 
-    // useExisting means the user accepted the near match — use mealName as-is (already the matched name)
+    // useExisting means the user accepted the near match — but the matched name may be a library meal
     const finalName = normalizeMealName(mealName);
+
+    // If the confirmed name is a library meal, record a request instead of a suggestion
+    const libraryHit = findExactLibraryMatch(finalName);
+    if (libraryHit) {
+      const result = addMealRequest(libraryHit.id, suggestedBy.trim());
+      if (!result.success) {
+        res.status(422).json({ error: result.reason });
+        return;
+      }
+      res.status(200).json({ requested: true, mealName: libraryHit.name });
+      return;
+    }
+
     const suggestion = addSuggestion(finalName, suggestedBy.trim());
     res.status(201).json(suggestion);
   } catch (error) {

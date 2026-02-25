@@ -12,6 +12,7 @@ export interface Meal {
   created_at: string;
   times_planned: number;
   last_planned: string | null;
+  times_requested: number;
 }
 
 export interface MealPlanEntry {
@@ -63,6 +64,10 @@ export interface SuggestionResponse {
   /** When present, the server found a near match and wants confirmation */
   nearMatch?: string;
   original?: string;
+  /** When true, the meal was already in the library and a request (vote) was recorded */
+  requested?: boolean;
+  /** The library meal name that was requested */
+  mealName?: string;
   /** When a suggestion was actually created */
   id?: number;
   meal_name?: string;
