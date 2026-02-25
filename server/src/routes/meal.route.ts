@@ -12,7 +12,8 @@ import {
   updateSuggestionStatus,
   normalizeMealName,
   findNearMatch,
-  findExactMatch
+  findExactMatch,
+  validateSuggestion
 } from '../services/meal.service';
 
 const ADMIN_PASSWORD = process.env.MEAL_ADMIN_PASSWORD || '';
@@ -86,6 +87,13 @@ mealRouter.post('/meals/suggestions', (req: Request, res: Response) => {
 
     if (!mealName?.trim() || !suggestedBy?.trim()) {
       res.status(400).json({ error: 'mealName and suggestedBy are required' });
+      return;
+    }
+
+    // Lightweight content & rate-limit validation
+    const validation = validateSuggestion(mealName, suggestedBy);
+    if (!validation.valid) {
+      res.status(422).json({ error: validation.reason });
       return;
     }
 

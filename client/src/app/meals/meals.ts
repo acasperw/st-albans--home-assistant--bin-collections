@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
 
 const NAME_STORAGE_KEY = 'meal_suggested_by';
@@ -35,6 +35,9 @@ export class MealsComponent implements OnInit, OnDestroy {
   nearMatch = signal<string | null>(null);
   nearMatchOriginal = signal<string | null>(null);
   exactMatch = signal<string | null>(null);
+
+  // Rejection message from server validation
+  rejectionMessage = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadPlan();
@@ -73,6 +76,7 @@ export class MealsComponent implements OnInit, OnDestroy {
     this.submitting.set(true);
     this.nearMatch.set(null);
     this.exactMatch.set(null);
+    this.rejectionMessage.set(null);
     this.mealService.submitSuggestion(mealName, name).subscribe({
       next: (res) => {
         if (res.exactMatch) {
@@ -88,7 +92,10 @@ export class MealsComponent implements OnInit, OnDestroy {
           this.completeSuggestion(name);
         }
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 422 && err.error?.error) {
+          this.rejectionMessage.set(err.error.error);
+        }
         this.submitting.set(false);
       },
     });
@@ -126,6 +133,7 @@ export class MealsComponent implements OnInit, OnDestroy {
     this.nearMatch.set(null);
     this.nearMatchOriginal.set(null);
     this.exactMatch.set(null);
+    this.rejectionMessage.set(null);
     this.queueSuccessReset();
   }
 

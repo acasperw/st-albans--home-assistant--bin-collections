@@ -61,6 +61,11 @@
         </div>
       </div>
     } @else {
+      @if (rejectionMessage()) {
+        <div class="rejection-message">
+          🚫 {{ rejectionMessage() }}
+        </div>
+      }
       <form (submit)="onSuggest($event)" class="suggest-form">
         <label for="mealName">What meal?</label>
         <input

@@ -164,6 +164,16 @@
   font-size: 0.95rem;
 }
 
+.rejection-message {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 0.75rem 1rem;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
 .exact-match-prompt {
   background: #f8d7da;
   border: 1px solid #f5c6cb;
