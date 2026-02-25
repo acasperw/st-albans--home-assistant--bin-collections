@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { MealService, Meal, MealPlanDay, Suggestion } from '../../shared/services/meal.service';
+import { MealService, Meal, MealPlanDay, Suggestion, PlanEntryResponse } from '../../shared/services/meal.service';
 
 type AdminTab = 'plan' | 'suggestions' | 'library';
 
@@ -32,6 +32,12 @@ export class MealAdminComponent implements OnInit {
   // Matched library meal for the current edit input
   private editMatchedMealId = signal<number | null>(null);
 
+  // Plan fuzzy-match prompts
+  planNearMatch = signal<string | null>(null);
+  planExactMatch = signal<string | null>(null);
+  planMatchedMealId = signal<number | null>(null);
+  planSaveDate = signal<string | null>(null);
+
   // Suggestions
   suggestions = signal<Suggestion[]>([]);
   suggestionsLoading = signal(true);
@@ -42,6 +48,9 @@ export class MealAdminComponent implements OnInit {
   newMealName = signal('');
   addingMeal = signal(false);
   libraryError = signal<string | null>(null);
+  libraryNearMatch = signal<string | null>(null);
+  libraryExactMatch = signal<string | null>(null);
+  libraryOriginal = signal<string | null>(null);
 
   ngOnInit(): void {
     // Check if already authenticated
@@ -134,27 +143,92 @@ export class MealAdminComponent implements OnInit {
     this.editMatchedMealId.set(match?.id ?? null);
   }
 
-  onSavePlan(date: string): void {
+  onSavePlan(date: string, force = false): void {
     const name = this.editMealName().trim();
     if (!name) return;
 
     this.savingPlan.set(true);
+    this.planNearMatch.set(null);
+    this.planExactMatch.set(null);
+
     const mealId = this.editMatchedMealId();
     const customName = mealId ? null : name;
 
-    this.mealService.setPlanEntry(date, mealId, customName, this.editNotes().trim() || undefined).subscribe({
+    this.mealService.setPlanEntry(date, mealId, customName, this.editNotes().trim() || undefined, force).subscribe({
+      next: (res: PlanEntryResponse) => {
+        if (res.exactMatch) {
+          this.planExactMatch.set(res.exactMatch);
+          this.planMatchedMealId.set(res.matchedMealId ?? null);
+          this.planSaveDate.set(date);
+          this.savingPlan.set(false);
+          return;
+        }
+        if (res.nearMatch) {
+          this.planNearMatch.set(res.nearMatch);
+          this.planMatchedMealId.set(res.matchedMealId ?? null);
+          this.planSaveDate.set(date);
+          this.savingPlan.set(false);
+          return;
+        }
+        // Saved successfully
+        this.editingDate.set(null);
+        this.savingPlan.set(false);
+        this.loadPlan();
+        this.loadLibrary();
+      },
+      error: () => this.savingPlan.set(false),
+    });
+  }
+
+  /** User confirmed the fuzzy match — save with the matched library meal */
+  onPlanAcceptMatch(): void {
+    const date = this.planSaveDate();
+    const mealId = this.planMatchedMealId();
+    if (!date || !mealId) return;
+
+    this.savingPlan.set(true);
+    this.planNearMatch.set(null);
+    this.planExactMatch.set(null);
+
+    this.mealService.setPlanEntry(date, mealId, null, this.editNotes().trim() || undefined).subscribe({
       next: () => {
         this.editingDate.set(null);
         this.savingPlan.set(false);
+        this.loadLibrary();
+        this.planMatchedMealId.set(null);
+        this.planSaveDate.set(null);
         this.loadPlan();
       },
       error: () => this.savingPlan.set(false),
     });
   }
 
+  /** User said "no, keep my name" — force-save as custom */
+  onPlanForceCustom(): void {
+    const date = this.planSaveDate();
+    if (!date) return;
+
+    this.planNearMatch.set(null);
+    this.planExactMatch.set(null);
+    this.planMatchedMealId.set(null);
+    this.planSaveDate.set(null);
+    this.onSavePlan(date, true);
+  }
+
+  /** Dismiss the match prompt without saving */
+  onPlanDismissMatch(): void {
+    this.planNearMatch.set(null);
+    this.planExactMatch.set(null);
+    this.planMatchedMealId.set(null);
+    this.planSaveDate.set(null);
+  }
+
   onRemovePlan(id: number): void {
     this.mealService.deletePlanEntry(id).subscribe({
-      next: () => this.loadPlan(),
+      next: () => {
+        this.loadPlan();
+        this.loadLibrary();
+      },
     });
   }
 
@@ -180,12 +254,22 @@ export class MealAdminComponent implements OnInit {
 
     this.addingMeal.set(true);
     this.libraryError.set(null);
+    this.libraryNearMatch.set(null);
+    this.libraryExactMatch.set(null);
 
     this.mealService.addToLibrary(name).subscribe({
-      next: () => {
-        this.newMealName.set('');
+      next: (res) => {
         this.addingMeal.set(false);
-        this.loadLibrary();
+        if (res.exactMatch) {
+          this.libraryExactMatch.set(res.exactMatch);
+          this.libraryOriginal.set(res.original ?? name);
+        } else if (res.nearMatch) {
+          this.libraryNearMatch.set(res.nearMatch);
+          this.libraryOriginal.set(res.original ?? name);
+        } else {
+          this.newMealName.set('');
+          this.loadLibrary();
+        }
       },
       error: (err) => {
         this.addingMeal.set(false);
@@ -196,6 +280,44 @@ export class MealAdminComponent implements OnInit {
         }
       },
     });
+  }
+
+  onLibraryAcceptMatch(): void {
+    const match = this.libraryNearMatch();
+    if (!match) return;
+    // The match already exists, no need to add
+    this.libraryNearMatch.set(null);
+    this.libraryOriginal.set(null);
+    this.newMealName.set('');
+    this.libraryError.set(`"${match}" is already in the library.`);
+  }
+
+  onLibraryForceAdd(): void {
+    const original = this.libraryOriginal();
+    if (!original) return;
+
+    this.addingMeal.set(true);
+    this.libraryNearMatch.set(null);
+    this.libraryExactMatch.set(null);
+
+    this.mealService.addToLibrary(original, undefined, true).subscribe({
+      next: () => {
+        this.newMealName.set('');
+        this.addingMeal.set(false);
+        this.libraryOriginal.set(null);
+        this.loadLibrary();
+      },
+      error: () => {
+        this.addingMeal.set(false);
+        this.libraryError.set('Failed to add meal.');
+      },
+    });
+  }
+
+  onLibraryDismissMatch(): void {
+    this.libraryNearMatch.set(null);
+    this.libraryExactMatch.set(null);
+    this.libraryOriginal.set(null);
   }
 
   onDeleteMeal(id: number): void {

@@ -1,8 +1,8 @@
 /* Kiosk mode: hide mouse cursor for touch screen deployment.
-	 To temporarily re-enable during development, add class `show-cursor` to <html> or <body>. */
-html,
-body,
-body * {
+	 To temporarily re-enable during development, add class `show-cursor` to <html> or <body>.
+	 Cursor is shown in meals section for easier interaction. */
+body:not(.meals-route),
+body:not(.meals-route) * {
   cursor: none !important;
 }
 

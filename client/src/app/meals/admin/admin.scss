@@ -266,6 +266,35 @@
   }
 }
 
+// ── Plan match prompts ──
+
+.plan-match-prompt {
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+
+  p {
+    margin: 0 0 0.4rem;
+  }
+
+  &.exact {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+  }
+
+  &.near {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
+
+  .plan-match-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
 .btn-save {
   padding: 0.4rem 1rem;
   background: var(--wp--preset--color--primary);
@@ -435,6 +464,54 @@
   background: #fff;
   border-radius: var(--wp--custom--default-border-radius);
   font-size: 0.95rem;
+}
+
+.library-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.library-item-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.library-item-stats {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+// ── Library match prompts ──
+
+.library-match-prompt {
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+
+  &.exact {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+  }
+
+  &.near {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
+
+  .near-match-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
 }
 
 // ── Shared ──

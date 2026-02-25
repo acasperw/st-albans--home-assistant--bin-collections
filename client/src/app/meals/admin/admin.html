@@ -70,10 +70,33 @@
                       [value]="editNotes()"
                       (input)="editNotes.set(asInputValue($event))"
                     />
-                    <div class="edit-actions">
-                      <button class="btn-save" (click)="onSavePlan(day.date)" [disabled]="savingPlan()">Save</button>
-                      <button class="btn-cancel" (click)="editingDate.set(null)">Cancel</button>
-                    </div>
+
+                    @if (planExactMatch()) {
+                      <div class="plan-match-prompt exact">
+                        <p><strong>{{ planExactMatch() }}</strong> is already in the library. Use it?</p>
+                        <div class="plan-match-actions">
+                          <button class="btn-save" (click)="onPlanAcceptMatch()" [disabled]="savingPlan()">Yes, use it</button>
+                          <button class="btn-cancel" (click)="onPlanDismissMatch()">Cancel</button>
+                        </div>
+                      </div>
+                    }
+
+                    @if (planNearMatch()) {
+                      <div class="plan-match-prompt near">
+                        <p>Did you mean <strong>{{ planNearMatch() }}</strong>?</p>
+                        <div class="plan-match-actions">
+                          <button class="btn-save" (click)="onPlanAcceptMatch()" [disabled]="savingPlan()">Yes, use it</button>
+                          <button class="btn-cancel" (click)="onPlanForceCustom()" [disabled]="savingPlan()">No, keep "{{ editMealName() }}"</button>
+                        </div>
+                      </div>
+                    }
+
+                    @if (!planExactMatch() && !planNearMatch()) {
+                      <div class="edit-actions">
+                        <button class="btn-save" (click)="onSavePlan(day.date)" [disabled]="savingPlan()">Save</button>
+                        <button class="btn-cancel" (click)="editingDate.set(null)">Cancel</button>
+                      </div>
+                    }
                   </div>
                 } @else {
                   <!-- Display mode -->
@@ -151,13 +174,42 @@
           <p class="form-error">{{ libraryError() }}</p>
         }
 
+        @if (libraryExactMatch()) {
+          <div class="library-match-prompt exact">
+            <p><strong>{{ libraryExactMatch() }}</strong> is already in the library.</p>
+            <button class="btn-cancel" (click)="onLibraryDismissMatch()">OK</button>
+          </div>
+        }
+
+        @if (libraryNearMatch()) {
+          <div class="library-match-prompt near">
+            <p>Did you mean <strong>{{ libraryNearMatch() }}</strong>?</p>
+            <div class="near-match-actions">
+              <button class="btn-save" (click)="onLibraryAcceptMatch()">Yes, it's the same</button>
+              <button class="btn-cancel" (click)="onLibraryForceAdd()" [disabled]="addingMeal()">No, add "{{ libraryOriginal() }}"</button>
+            </div>
+          </div>
+        }
+
         @if (library().length === 0) {
           <p class="empty-state">No meals in the library yet. Add one above or accept a suggestion.</p>
         } @else {
           <ul class="library-list">
             @for (meal of library(); track meal.id) {
               <li class="library-item">
-                <span>{{ meal.name }}</span>
+                <div class="library-item-info">
+                  <span class="library-item-name">{{ meal.name }}</span>
+                  <span class="library-item-stats">
+                    @if (meal.times_planned > 0) {
+                      Planned {{ meal.times_planned }}×
+                      @if (meal.last_planned) {
+                        · last {{ meal.last_planned }}
+                      }
+                    } @else {
+                      Never planned
+                    }
+                  </span>
+                </div>
                 <button class="btn-icon" title="Delete" (click)="onDeleteMeal(meal.id)">🗑️</button>
               </li>
             }

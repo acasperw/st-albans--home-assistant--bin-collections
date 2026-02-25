@@ -164,6 +164,74 @@
   font-size: 0.95rem;
 }
 
+.exact-match-prompt {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: #721c24;
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+
+  button {
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-weight: 600;
+    cursor: pointer;
+  }
+}
+
+.near-match-prompt {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 1rem;
+  font-size: 0.95rem;
+
+  p {
+    margin: 0 0 0.75rem;
+    color: #856404;
+  }
+
+  strong {
+    color: #664d03;
+  }
+}
+
+.near-match-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  button {
+    padding: 0.6rem 1rem;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.btn-accept-match {
+  background: var(--wp--preset--color--primary);
+  color: #fff;
+}
+
+.btn-keep-original {
+  background: #eee;
+  color: #333;
+}
+
 // ── Footer ──
 
 .meal-footer {

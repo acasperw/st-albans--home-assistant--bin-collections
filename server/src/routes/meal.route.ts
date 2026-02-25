@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import {
   getAllMeals,
+  getMealsWithStats,
   addMeal,
   deleteMeal,
   getMealPlan,
@@ -8,7 +9,10 @@ import {
   deleteMealPlanEntry,
   addSuggestion,
   getAllSuggestions,
-  updateSuggestionStatus
+  updateSuggestionStatus,
+  normalizeMealName,
+  findNearMatch,
+  findExactMatch
 } from '../services/meal.service';
 
 const ADMIN_PASSWORD = process.env.MEAL_ADMIN_PASSWORD || '';
@@ -74,14 +78,45 @@ mealRouter.get('/meals/plan', (req: Request, res: Response) => {
 // POST /meals/suggestions — submit a suggestion (public)
 mealRouter.post('/meals/suggestions', (req: Request, res: Response) => {
   try {
-    const { mealName, suggestedBy } = req.body as { mealName?: string; suggestedBy?: string };
+    const { mealName, suggestedBy, useExisting } = req.body as {
+      mealName?: string;
+      suggestedBy?: string;
+      useExisting?: boolean;
+    };
 
     if (!mealName?.trim() || !suggestedBy?.trim()) {
       res.status(400).json({ error: 'mealName and suggestedBy are required' });
       return;
     }
 
-    const suggestion = addSuggestion(mealName.trim(), suggestedBy.trim());
+    const normalized = normalizeMealName(mealName);
+
+    // If client hasn't confirmed yet, check for exact and near matches
+    if (!useExisting) {
+      // Exact match — meal already exists
+      const exact = findExactMatch(normalized);
+      if (exact) {
+        res.status(200).json({
+          exactMatch: exact,
+          original: normalized,
+        });
+        return;
+      }
+
+      // Near match — possible typo
+      const nearMatch = findNearMatch(normalized);
+      if (nearMatch) {
+        res.status(200).json({
+          nearMatch: nearMatch.name,
+          original: normalized,
+        });
+        return;
+      }
+    }
+
+    // useExisting means the user accepted the near match — use mealName as-is (already the matched name)
+    const finalName = normalizeMealName(mealName);
+    const suggestion = addSuggestion(finalName, suggestedBy.trim());
     res.status(201).json(suggestion);
   } catch (error) {
     console.error('Error adding suggestion:', error);
@@ -161,10 +196,10 @@ mealRouter.put('/meals/suggestions/:id', requireAdmin, (req: Request, res: Respo
   }
 });
 
-// GET /meals/library — full meal catalog (admin)
+// GET /meals/library — full meal catalog with stats (admin)
 mealRouter.get('/meals/library', requireAdmin, (req: Request, res: Response) => {
   try {
-    const meals = getAllMeals();
+    const meals = getMealsWithStats();
     res.json(meals);
   } catch (error) {
     console.error('Error fetching meal library:', error);
@@ -175,14 +210,31 @@ mealRouter.get('/meals/library', requireAdmin, (req: Request, res: Response) => 
 // POST /meals/library — add meal to library (admin)
 mealRouter.post('/meals/library', requireAdmin, (req: Request, res: Response) => {
   try {
-    const { name, description } = req.body as { name?: string; description?: string };
+    const { name, description, force } = req.body as { name?: string; description?: string; force?: boolean };
 
     if (!name?.trim()) {
       res.status(400).json({ error: 'name is required' });
       return;
     }
 
-    const meal = addMeal(name.trim(), description?.trim());
+    const normalized = normalizeMealName(name);
+
+    // Unless forced, check for exact/near matches
+    if (!force) {
+      const exact = findExactMatch(normalized);
+      if (exact) {
+        res.status(200).json({ exactMatch: exact, original: normalized });
+        return;
+      }
+
+      const nearMatch = findNearMatch(normalized);
+      if (nearMatch) {
+        res.status(200).json({ nearMatch: nearMatch.name, original: normalized });
+        return;
+      }
+    }
+
+    const meal = addMeal(normalized, description?.trim());
     res.status(201).json(meal);
   } catch (error: unknown) {
     if (error instanceof Error && error.message.includes('UNIQUE')) {
@@ -219,11 +271,12 @@ mealRouter.delete('/meals/library/:id', requireAdmin, (req: Request, res: Respon
 // POST /meals/plan — assign meal to a date (admin)
 mealRouter.post('/meals/plan', requireAdmin, (req: Request, res: Response) => {
   try {
-    const { date, mealId, customName, notes } = req.body as {
+    const { date, mealId, customName, notes, force } = req.body as {
       date?: string;
       mealId?: number;
       customName?: string;
       notes?: string;
+      force?: boolean;
     };
 
     if (!date) {
@@ -234,6 +287,26 @@ mealRouter.post('/meals/plan', requireAdmin, (req: Request, res: Response) => {
     if (!mealId && !customName?.trim()) {
       res.status(400).json({ error: 'Either mealId or customName is required' });
       return;
+    }
+
+    // When saving with a custom name (no library match), check for fuzzy matches
+    if (!mealId && customName?.trim() && !force) {
+      const normalized = normalizeMealName(customName);
+      const allMeals = getAllMeals();
+
+      const exact = findExactMatch(normalized);
+      if (exact) {
+        const matched = allMeals.find(m => m.name.toLowerCase() === exact.toLowerCase());
+        res.status(200).json({ exactMatch: exact, original: normalized, matchedMealId: matched?.id ?? null });
+        return;
+      }
+
+      const nearMatch = findNearMatch(normalized);
+      if (nearMatch) {
+        const matched = allMeals.find(m => m.name.toLowerCase() === nearMatch.name.toLowerCase());
+        res.status(200).json({ nearMatch: nearMatch.name, original: normalized, matchedMealId: matched?.id ?? null });
+        return;
+      }
     }
 
     const entry = setMealPlanEntry(

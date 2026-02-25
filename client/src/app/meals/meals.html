@@ -43,6 +43,23 @@
       <div class="success-message">
         ✅ Thanks, {{ lastSuggestedBy() }}! Your suggestion has been sent.
       </div>
+    } @else if (exactMatch()) {
+      <div class="exact-match-prompt">
+        <p><strong>{{ exactMatch() }}</strong> is already on the list! Try suggesting something else.</p>
+        <button class="btn-keep-original" (click)="exactMatch.set(null)">OK</button>
+      </div>
+    } @else if (nearMatch()) {
+      <div class="near-match-prompt">
+        <p>Did you mean <strong>{{ nearMatch() }}</strong>?</p>
+        <div class="near-match-actions">
+          <button class="btn-accept-match" (click)="onAcceptMatch()" [disabled]="submitting()">
+            Yes, use "{{ nearMatch() }}"
+          </button>
+          <button class="btn-keep-original" (click)="onKeepOriginal()" [disabled]="submitting()">
+            No, keep "{{ nearMatchOriginal() }}"
+          </button>
+        </div>
+      </div>
     } @else {
       <form (submit)="onSuggest($event)" class="suggest-form">
         <label for="mealName">What meal?</label>

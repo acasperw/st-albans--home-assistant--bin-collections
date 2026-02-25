@@ -10,6 +10,8 @@ export interface Meal {
   name: string;
   description: string | null;
   created_at: string;
+  times_planned: number;
+  last_planned: string | null;
 }
 
 export interface MealPlanEntry {
@@ -19,6 +21,22 @@ export interface MealPlanEntry {
   custom_name: string | null;
   notes: string | null;
   meal_name: string | null;
+}
+
+export interface PlanEntryResponse {
+  /** Returned when the entry was saved successfully */
+  id?: number;
+  date?: string;
+  meal_id?: number | null;
+  custom_name?: string | null;
+  notes?: string | null;
+  meal_name?: string | null;
+  /** When present, the server found an exact match in the library */
+  exactMatch?: string;
+  /** When present, the server found a near match in the library */
+  nearMatch?: string;
+  original?: string;
+  matchedMealId?: number | null;
 }
 
 export interface MealPlanDay {
@@ -37,6 +55,31 @@ export interface Suggestion {
   suggested_by: string;
   status: 'pending' | 'accepted' | 'dismissed';
   created_at: string;
+}
+
+export interface SuggestionResponse {
+  /** When present, the server found an exact match already in the library/pending */
+  exactMatch?: string;
+  /** When present, the server found a near match and wants confirmation */
+  nearMatch?: string;
+  original?: string;
+  /** When a suggestion was actually created */
+  id?: number;
+  meal_name?: string;
+  suggested_by?: string;
+  status?: string;
+  created_at?: string;
+}
+
+export interface LibraryAddResponse {
+  /** Exact match found */
+  exactMatch?: string;
+  /** Near match found */
+  nearMatch?: string;
+  original?: string;
+  /** When actually created */
+  id?: number;
+  name?: string;
 }
 
 const STORAGE_KEY = 'meal_admin_token';
@@ -78,8 +121,8 @@ export class MealService {
     return this.http.get<MealPlanResponse>(`${this.baseUrl}/plan`);
   }
 
-  submitSuggestion(mealName: string, suggestedBy: string): Observable<Suggestion> {
-    return this.http.post<Suggestion>(`${this.baseUrl}/suggestions`, { mealName, suggestedBy });
+  submitSuggestion(mealName: string, suggestedBy: string, useExisting = false): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(`${this.baseUrl}/suggestions`, { mealName, suggestedBy, useExisting });
   }
 
   // ── Admin ──
@@ -102,8 +145,8 @@ export class MealService {
     });
   }
 
-  addToLibrary(name: string, description?: string): Observable<Meal> {
-    return this.http.post<Meal>(`${this.baseUrl}/library`, { name, description }, {
+  addToLibrary(name: string, description?: string, force = false): Observable<LibraryAddResponse> {
+    return this.http.post<LibraryAddResponse>(`${this.baseUrl}/library`, { name, description, force }, {
       headers: this.authHeaders(),
     });
   }
@@ -114,8 +157,8 @@ export class MealService {
     });
   }
 
-  setPlanEntry(date: string, mealId: number | null, customName: string | null, notes?: string): Observable<MealPlanEntry> {
-    return this.http.post<MealPlanEntry>(`${this.baseUrl}/plan`, { date, mealId, customName, notes }, {
+  setPlanEntry(date: string, mealId: number | null, customName: string | null, notes?: string, force = false): Observable<PlanEntryResponse> {
+    return this.http.post<PlanEntryResponse>(`${this.baseUrl}/plan`, { date, mealId, customName, notes, force }, {
       headers: this.authHeaders(),
     });
   }

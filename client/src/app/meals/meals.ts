@@ -31,6 +31,11 @@ export class MealsComponent implements OnInit, OnDestroy {
   lastSuggestedBy = signal('');
   private resetTimerId: number | null = null;
 
+  // Near-match confirmation state
+  nearMatch = signal<string | null>(null);
+  nearMatchOriginal = signal<string | null>(null);
+  exactMatch = signal<string | null>(null);
+
   ngOnInit(): void {
     this.loadPlan();
     const savedName = localStorage.getItem(NAME_STORAGE_KEY);
@@ -66,18 +71,62 @@ export class MealsComponent implements OnInit, OnDestroy {
     if (!mealName || !name) return;
 
     this.submitting.set(true);
+    this.nearMatch.set(null);
+    this.exactMatch.set(null);
     this.mealService.submitSuggestion(mealName, name).subscribe({
-      next: () => {
-        this.lastSuggestedBy.set(name);
-        this.suggestionSent.set(true);
-        this.submitting.set(false);
-        this.suggestMealName.set('');
-        this.queueSuccessReset();
+      next: (res) => {
+        if (res.exactMatch) {
+          // Meal already exists — inform user
+          this.exactMatch.set(res.exactMatch);
+          this.submitting.set(false);
+        } else if (res.nearMatch) {
+          // Server found a similar meal — ask user to confirm
+          this.nearMatch.set(res.nearMatch);
+          this.nearMatchOriginal.set(res.original ?? mealName);
+          this.submitting.set(false);
+        } else {
+          this.completeSuggestion(name);
+        }
       },
       error: () => {
         this.submitting.set(false);
       },
     });
+  }
+
+  onAcceptMatch(): void {
+    const match = this.nearMatch();
+    const name = this.suggestName().trim();
+    if (!match || !name) return;
+
+    this.submitting.set(true);
+    this.mealService.submitSuggestion(match, name, true).subscribe({
+      next: () => this.completeSuggestion(name),
+      error: () => this.submitting.set(false),
+    });
+  }
+
+  onKeepOriginal(): void {
+    const original = this.nearMatchOriginal();
+    const name = this.suggestName().trim();
+    if (!original || !name) return;
+
+    this.submitting.set(true);
+    this.mealService.submitSuggestion(original, name, true).subscribe({
+      next: () => this.completeSuggestion(name),
+      error: () => this.submitting.set(false),
+    });
+  }
+
+  private completeSuggestion(name: string): void {
+    this.lastSuggestedBy.set(name);
+    this.suggestionSent.set(true);
+    this.submitting.set(false);
+    this.suggestMealName.set('');
+    this.nearMatch.set(null);
+    this.nearMatchOriginal.set(null);
+    this.exactMatch.set(null);
+    this.queueSuccessReset();
   }
 
   onNameInput(event: Event): void {
