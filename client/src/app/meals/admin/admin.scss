@@ -1,0 +1,459 @@
+.admin-page {
+  min-height: 100vh;
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: var(--wp--preset--font-family--body-font);
+  color: var(--wp--preset--color--dark);
+  background: var(--wp--preset--color--light);
+}
+
+// ── Login ──
+
+.login-card {
+  margin-top: 20vh;
+  padding: 2rem;
+  background: #fff;
+  border-radius: var(--wp--custom--default-border-radius);
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+
+  input {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 1rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--wp--preset--color--secondary);
+      box-shadow: 0 0 0 2px rgba(255, 188, 0, 0.25);
+    }
+  }
+
+  button {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--wp--preset--color--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--wp--custom--color--primary-hover);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.form-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+// ── Header ──
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  h1 {
+    font-size: clamp(1.3rem, 5vw, 1.75rem);
+    margin: 0;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+
+    &:hover {
+      color: var(--wp--preset--color--primary);
+    }
+  }
+}
+
+// ── Tabs ──
+
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 1rem;
+
+  button {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    position: relative;
+
+    &.active {
+      color: var(--wp--preset--color--primary);
+      border-bottom-color: var(--wp--preset--color--secondary);
+    }
+
+    &:hover:not(.active) {
+      color: var(--wp--preset--color--dark);
+    }
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.35rem;
+  border-radius: 99px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.3rem;
+  vertical-align: super;
+}
+
+.tab-content {
+  animation: fade-in 0.15s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ── Plan tab ──
+
+.day-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.day-card-admin {
+  background: #fff;
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.day-info {
+  min-width: 6rem;
+  display: flex;
+  flex-direction: column;
+
+  .day-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .day-date {
+    font-size: 0.75rem;
+    color: #888;
+  }
+}
+
+.day-meal-admin {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+
+  .meal-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 0.2rem;
+    flex-shrink: 0;
+  }
+}
+
+.btn-add {
+  background: none;
+  border: 1px dashed #ccc;
+  border-radius: var(--wp--custom--default-border-radius);
+  padding: 0.3rem 0.75rem;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover {
+    border-color: var(--wp--preset--color--secondary);
+    color: var(--wp--preset--color--primary);
+  }
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.15rem;
+  line-height: 1;
+}
+
+.edit-row {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  input {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.95rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--wp--preset--color--secondary);
+    }
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.btn-save {
+  padding: 0.4rem 1rem;
+  background: var(--wp--preset--color--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.btn-cancel {
+  padding: 0.4rem 1rem;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+// ── Suggestions tab ──
+
+.empty-state {
+  text-align: center;
+  color: #888;
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+.suggestion-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.suggestion-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--wp--custom--default-border-radius);
+  border-left: 4px solid #ddd;
+
+  &.pending {
+    border-left-color: var(--wp--preset--color--secondary);
+  }
+
+  &.accepted {
+    border-left-color: #22c55e;
+    opacity: 0.7;
+  }
+
+  &.dismissed {
+    border-left-color: #aaa;
+    opacity: 0.5;
+  }
+}
+
+.suggestion-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .suggestion-meal {
+    font-weight: 600;
+  }
+
+  .suggestion-by {
+    font-size: 0.8rem;
+    color: #888;
+  }
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.btn-accept {
+  padding: 0.3rem 0.6rem;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-dismiss {
+  padding: 0.3rem 0.6rem;
+  background: #eee;
+  color: #666;
+  border: none;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.suggestion-status {
+  font-size: 0.8rem;
+  text-transform: capitalize;
+  color: #888;
+}
+
+// ── Library tab ──
+
+.add-meal-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  input {
+    flex: 1;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.95rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--wp--preset--color--secondary);
+    }
+  }
+
+  button {
+    padding: 0.5rem 1rem;
+    background: var(--wp--preset--color--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--wp--custom--default-border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.library-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.library-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border-radius: var(--wp--custom--default-border-radius);
+  font-size: 0.95rem;
+}
+
+// ── Shared ──
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top: 3px solid var(--wp--preset--color--secondary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -3,6 +3,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { HealthCheckResponse, TestScenario } from './types';
 import { binCollectionRouter } from './routes/bin-collection.route';
+import { mealRouter } from './routes/meal.route';
 import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
@@ -33,12 +34,16 @@ if (existsSync(activeClientDir)) {
 app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') { res.sendStatus(204); return; }
   next();
 });
 
 // Mount bin collection routes under /api
 app.use('/api', binCollectionRouter);
+
+// Mount meal planner routes under /api
+app.use('/api', mealRouter);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
