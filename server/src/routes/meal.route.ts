@@ -47,6 +47,14 @@ function requireAdmin(req: Request, res: Response, next: NextFunction): void {
 
 export const mealRouter = Router();
 
+/** Format a Date as YYYY-MM-DD using local time (avoids toISOString UTC shift). */
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 // ── Public routes ──
 
 // GET /meals/plan — rolling 7-day plan
@@ -57,7 +65,7 @@ mealRouter.get('/meals/plan', (req: Request, res: Response) => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      dates.push(d.toISOString().split('T')[0]!);
+      dates.push(toLocalDateStr(d));
     }
 
     const startDate = dates[0]!;

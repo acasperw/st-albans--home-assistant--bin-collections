@@ -42,7 +42,7 @@ export class Clock implements OnInit, OnDestroy {
     if (isEvening) {
       targetDate.setDate(targetDate.getDate() + 1);
     }
-    const dateStr = targetDate.toISOString().split('T')[0];
+    const dateStr = this.toLocalDateStr(targetDate);
     const day = this.mealPlan().find(d => d.date === dateStr);
     return day?.entry ? (day.entry.meal_name ?? day.entry.custom_name) : null;
   });
@@ -83,6 +83,14 @@ export class Clock implements OnInit, OnDestroy {
       this.now.set(new Date());
       this.secondTimer = setInterval(() => this.now.set(new Date()), 1000);
     }, 1000 - ms);
+  }
+
+  /** Format a Date as YYYY-MM-DD using local time (avoids toISOString UTC shift). */
+  private toLocalDateStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
 }
