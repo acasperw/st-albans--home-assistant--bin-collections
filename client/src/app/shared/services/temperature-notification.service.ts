@@ -28,7 +28,8 @@ export class TemperatureNotificationService extends NotificationService {
         message: 'Cover outdoor taps, & all vulnerable plants',
         icon: '🥶',
         temperature: overnightMinTemp,
-        metadata: { temperatureThreshold: 0, severity: 'high' }
+        metadata: { temperatureThreshold: 0, severity: 'high' },
+        createdAt: Date.now()
       };
     } else if (overnightMinTemp < 4) {
       notification = {
@@ -37,7 +38,8 @@ export class TemperatureNotificationService extends NotificationService {
         message: 'Protect Mediterranean plants',
         icon: '⚠️',
         temperature: overnightMinTemp,
-        metadata: { temperatureThreshold: 4, severity: 'medium' }
+        metadata: { temperatureThreshold: 4, severity: 'medium' },
+        createdAt: Date.now()
       };
     }
 

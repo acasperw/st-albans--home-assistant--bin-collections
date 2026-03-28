@@ -8,6 +8,7 @@ export interface NotificationData {
   message: string;
   icon?: string;
   metadata?: Record<string, unknown>;
+  createdAt?: number;
 }
 
 /**

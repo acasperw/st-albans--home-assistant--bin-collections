@@ -101,7 +101,8 @@ export class BinCollectionNotificationService {
       metadata: { 
         collectionDate: collection.date,
         services: collection.services.map(s => s.serviceType)
-      }
+      },
+      createdAt: Date.now()
     };
 
     this.notificationService.setNotification(notification);

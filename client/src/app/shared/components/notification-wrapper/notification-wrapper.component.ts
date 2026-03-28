@@ -1,17 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { NotificationService } from '../../services/notification.service';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
+import { NotificationService, NotificationData } from '../../services/notification.service';
 import { TemperatureNotificationService } from '../../services/temperature-notification.service';
 import { NotificationComponent } from '../notification/notification.component';
 
-/**
- * Unified notification wrapper that handles prioritization between
- * temperature warnings, bin collection reminders, and general notifications
- * 
- * Priority order:
- * 1. Temperature warnings (when idle) - safety critical
- * 2. Bin collection reminders - important daily task
- * 3. General notifications (barcodes, errors, etc.)
- */
+const CYCLE_INTERVAL_MS = 8_000;
+const NOTIFICATION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 @Component({
   selector: 'app-notification-wrapper',
   imports: [NotificationComponent],
@@ -24,65 +18,90 @@ import { NotificationComponent } from '../notification/notification.component';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NotificationWrapperComponent {
+export class NotificationWrapperComponent implements OnInit {
   private generalNotificationService = inject(NotificationService);
   private temperatureNotificationService = inject(TemperatureNotificationService);
+  private destroyRef = inject(DestroyRef);
 
-  // Allow parent to control when we're in idle/screensaver mode
   public isIdle = input<boolean>(false);
 
-  // Prioritize notifications based on importance
-  protected activeNotification = computed(() => {
+  private cycleIndex = signal(0);
+
+  ngOnInit(): void {
+    const timer = setInterval(() => {
+      this.cycleIndex.update(i => i + 1);
+    }, CYCLE_INTERVAL_MS);
+
+    this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
+  private allNotifications = computed(() => {
+    // Read cycleIndex so staleness is re-evaluated each tick
+    this.cycleIndex();
+
+    const result: NotificationData[] = [];
     const tempNotification = this.temperatureNotificationService.notification();
     const generalNotification = this.generalNotificationService.notification();
-    
-    // 1. Temperature warnings take highest priority when idle (safety)
-    if (tempNotification && this.isIdle()) {
-      return tempNotification;
-    }
+    const now = Date.now();
 
-    // 2. Check if general notification is a bin reminder (has collectionDate metadata)
+    // Bin reminders first in cycle order
     if (generalNotification?.metadata && 'collectionDate' in generalNotification.metadata) {
-      return generalNotification; // Bin reminders have medium priority
+      if (!this.isStale(generalNotification, now)) {
+        result.push(generalNotification);
+      }
     }
 
-    // 3. Temperature notifications shown when not idle (lower priority)
-    if (tempNotification) {
-      return tempNotification;
+    // Temperature warnings (skip if stale)
+    if (tempNotification && !this.isStale(tempNotification, now)) {
+      result.push(tempNotification);
     }
 
-    // 4. Other general notifications (lowest priority)
-    return generalNotification;
+    // Other general notifications (transient, no staleness check)
+    if (generalNotification && !(generalNotification.metadata && 'collectionDate' in generalNotification.metadata)) {
+      result.push(generalNotification);
+    }
+
+    return result;
   });
 
-  // Determine if notification can be dismissed
+  protected activeNotification = computed(() => {
+    const all = this.allNotifications();
+    if (all.length === 0) return null;
+    if (all.length === 1) return all[0];
+    return all[this.cycleIndex() % all.length];
+  });
+
   protected canDismiss = computed(() => {
-    const tempNotification = this.temperatureNotificationService.notification();
     const activeNotif = this.activeNotification();
+    if (!activeNotif) return false;
 
     // Temperature warnings cannot be dismissed when idle
+    const tempNotification = this.temperatureNotificationService.notification();
     if (tempNotification && this.isIdle() && activeNotif === tempNotification) {
       return false;
     }
 
-    // Bin reminders can be dismissed
-    if (activeNotif?.metadata && 'collectionDate' in activeNotif.metadata) {
-      return true;
-    }
-
-    // All other notifications can be dismissed
     return true;
   });
 
   protected handleDismiss(): void {
+    const activeNotif = this.activeNotification();
+    if (!activeNotif) return;
+
     const tempNotification = this.temperatureNotificationService.notification();
-    
-    // Don't allow dismissing temperature warnings when idle
-    if (tempNotification && this.isIdle()) {
+
+    // If dismissing a temperature notification
+    if (activeNotif === tempNotification) {
+      if (this.isIdle()) return;
+      this.temperatureNotificationService.clearNotification();
       return;
     }
 
     // Dismiss the general notification (includes bin reminders)
     this.generalNotificationService.clearNotification();
+  }
+
+  private isStale(notification: NotificationData, now: number): boolean {
+    return !!notification.createdAt && (now - notification.createdAt) > NOTIFICATION_MAX_AGE_MS;
   }
 }
