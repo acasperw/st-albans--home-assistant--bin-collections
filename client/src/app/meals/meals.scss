@@ -18,6 +18,19 @@
   }
 }
 
+.admin-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--wp--preset--color--primary);
+  opacity: 0.6;
+  text-decoration: none;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 // ── Day list ──
 
 .day-list {

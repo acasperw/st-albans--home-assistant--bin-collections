@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, OnIn
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
 
@@ -11,7 +12,7 @@ const PLAN_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 
 @Component({
   selector: 'app-meals',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './meals.html',
   styleUrls: ['./meals.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +20,8 @@ const PLAN_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 export class MealsComponent implements OnInit, OnDestroy {
   private mealService = inject(MealService);
   private destroyRef = inject(DestroyRef);
+
+  isAdmin = signal(false);
 
   plan = signal<MealPlanDay[]>([]);
   loading = signal(true);
@@ -47,6 +50,8 @@ export class MealsComponent implements OnInit, OnDestroy {
   requestedMealName = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.isAdmin.set(this.mealService.isAuthenticated());
+
     this.loadPlan();
 
     // Refresh the meal plan every 30 minutes

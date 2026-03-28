@@ -209,7 +209,7 @@ mealRouter.get('/meals/suggestions', requireAdmin, (req: Request, res: Response)
 // PUT /meals/suggestions/:id — accept or dismiss (admin)
 mealRouter.put('/meals/suggestions/:id', requireAdmin, (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params['id'] ?? '', 10);
+    const id = parseInt(String(req.params['id'] ?? ''), 10);
     const { status, name } = req.body as { status?: string; name?: string };
 
     if (isNaN(id)) {
@@ -300,7 +300,7 @@ mealRouter.post('/meals/library', requireAdmin, (req: Request, res: Response) =>
 // DELETE /meals/library/:id — remove from library (admin)
 mealRouter.delete('/meals/library/:id', requireAdmin, (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params['id'] ?? '', 10);
+    const id = parseInt(String(req.params['id'] ?? ''), 10);
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid meal ID' });
       return;
@@ -322,7 +322,7 @@ mealRouter.delete('/meals/library/:id', requireAdmin, (req: Request, res: Respon
 // PATCH /meals/library/:id — rename a meal (admin)
 mealRouter.patch('/meals/library/:id', requireAdmin, (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params['id'] ?? '', 10);
+    const id = parseInt(String(req.params['id'] ?? ''), 10);
     const { name } = req.body as { name?: string };
 
     if (isNaN(id)) {
@@ -410,7 +410,7 @@ mealRouter.post('/meals/plan', requireAdmin, (req: Request, res: Response) => {
 // DELETE /meals/plan/:id — remove from plan (admin)
 mealRouter.delete('/meals/plan/:id', requireAdmin, (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params['id'] ?? '', 10);
+    const id = parseInt(String(req.params['id'] ?? ''), 10);
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid plan entry ID' });
       return;

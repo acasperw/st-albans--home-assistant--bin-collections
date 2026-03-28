@@ -1,6 +1,9 @@
 <div class="meal-plan-page">
   <header class="meal-header">
     <h1>🍽️ Dinner This Week</h1>
+    @if (isAdmin()) {
+      <a routerLink="/meals/admin" class="admin-link">⚙️ Admin</a>
+    }
   </header>
 
   @if (loading()) {
