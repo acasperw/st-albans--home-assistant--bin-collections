@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs';
 const STREAMS_DIR = path.join(__dirname, '..', '..', 'data', 'streams');
 const HLS_SEGMENT_TIME = 2; // seconds per segment
 const HLS_LIST_SIZE = 3; // keep 3 segments in playlist
-const RTSP_URL = 'rtsp://admin:Al22jb!123@192.168.68.63:554/Streaming/Channels/101';
+const RTSP_URL = process.env.CAMERA_RTSP_URL ?? 'rtsp://admin:Al22jb!123@192.168.68.63:554/Streaming/Channels/102';
 const HLS_PLAYLIST_FILENAME = 'stream.m3u8';
 const HLS_SEGMENT_FILENAME_PATTERN = 'segment-%03d.ts';
 
@@ -29,18 +29,15 @@ export function startStream(): void {
   const hlsPath = path.join(STREAMS_DIR, HLS_PLAYLIST_FILENAME);
   const segmentPattern = path.join(STREAMS_DIR, HLS_SEGMENT_FILENAME_PATTERN);
 
-  // ffmpeg: convert RTSP to HLS segments (with digest auth support)
+  // Use the camera sub-stream by default and avoid transcoding to keep startup fast on the Pi.
   ffmpegProcess = spawn('ffmpeg', [
+    '-hide_banner',
+    '-loglevel', 'info',
     '-rtsp_transport', 'tcp',
     '-rtsp_flags', 'prefer_tcp',
     '-i', RTSP_URL,
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-crf', '28',
-    '-maxrate', '2500k',
-    '-bufsize', '5000k',
-    '-c:a', 'aac',
-    '-b:a', '128k',
+    '-an',
+    '-c:v', 'copy',
     '-f', 'hls',
     '-hls_time', String(HLS_SEGMENT_TIME),
     '-hls_list_size', String(HLS_LIST_SIZE),
@@ -56,10 +53,18 @@ export function startStream(): void {
   });
 
   ffmpegProcess.stderr?.on('data', (data) => {
-    const msg = data.toString();
-    if (/error|401|403|unauthorized|forbidden|timed out|refused/i.test(msg)) {
-      lastStreamError = msg.trim();
-      console.error('[CameraStream] ffmpeg:', msg.trim());
+    const lines = data
+      .toString()
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter(Boolean);
+
+    for (const line of lines) {
+      if (/error|401|403|404|unauthorized|forbidden|timed out|refused|method DESCRIBE failed|Invalid data/i.test(line)) {
+        lastStreamError = line;
+      }
+
+      console.log('[CameraStream] ffmpeg:', line);
     }
   });
 
