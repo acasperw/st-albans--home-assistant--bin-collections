@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
@@ -8,14 +8,11 @@ import { Router } from '@angular/router';
   template: `
     <div class="camera-container">
       <div class="video-wrapper">
-        @if (isLoading()) {
-          <div class="loading">Loading camera snapshot...</div>
-        }
-        @if (!error()) {
-          <img [src]="snapshotUrl()!" class="video-player" alt="Camera snapshot" />
-        }
         @if (error()) {
           <div class="error-message">{{ error() }}</div>
+        }
+        @if (!error()) {
+          <img [src]="streamUrl()!" class="video-player" alt="Camera stream" />
         }
         @if (!error() && status()) {
           <div class="status-message">{{ status() }}</div>
@@ -140,48 +137,31 @@ import { Router } from '@angular/router';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CameraComponent implements OnDestroy {
+export class CameraComponent {
   private router = inject(Router);
   private http = inject(HttpClient);
 
-  protected isLoading = signal(true);
   protected error = signal<string | null>(null);
-  protected status = signal('Live snapshot mode (1s refresh)');
-  protected snapshotUrl = signal<string | null>(null);
+  protected status = signal('MJPEG stream (live)');
+  protected streamUrl = signal<string | null>(null);
   protected currentChannel = signal(1);
-
-  private snapshotRefreshId: number | null = null;
 
   constructor() {
     this.initializeStream();
-  }
-
-  ngOnDestroy(): void {
-    if (this.snapshotRefreshId !== null) {
-      window.clearInterval(this.snapshotRefreshId);
-      this.snapshotRefreshId = null;
-    }
+    // Probe stream connectivity on load
+    this.probeStream();
   }
 
   private initializeStream(): void {
-    this.status.set(`Live snapshot mode (CH ${this.currentChannel()}, 1s refresh)`);
+    this.setChannel(this.currentChannel());
+  }
 
-    const refreshSnapshot = () => {
-      this.snapshotUrl.set(`/api/camera/snapshot.jpg?ch=${this.currentChannel()}&t=${Date.now()}`);
-      this.isLoading.set(false);
-      this.error.set(null);
-    };
-
-    // Load immediately, then refresh every second.
-    refreshSnapshot();
-    this.snapshotRefreshId = window.setInterval(refreshSnapshot, 1000);
-
-    // Probe once so we can show a useful error message if snapshots fail.
-    this.http.get(`/api/camera/snapshot.jpg?ch=${this.currentChannel()}`, { responseType: 'blob' }).subscribe({
+  private probeStream(): void {
+    // Quick connectivity check
+    this.http.head(`/api/camera/stream.mjpeg?ch=${this.currentChannel()}`).subscribe({
       error: (err) => {
-        console.error('[CameraComponent] Snapshot probe failed:', err);
-        this.error.set('Unable to load camera snapshot');
-        this.isLoading.set(false);
+        console.error('[CameraComponent] Stream probe failed:', err);
+        this.error.set('Unable to connect to camera stream');
       }
     });
   }
@@ -198,13 +178,13 @@ export class CameraComponent implements OnDestroy {
 
   private setChannel(channel: number): void {
     this.currentChannel.set(channel);
-    this.status.set(`Live snapshot mode (CH ${channel}, 1s refresh)`);
-    this.snapshotUrl.set(`/api/camera/snapshot.jpg?ch=${channel}&t=${Date.now()}`);
+    this.status.set(`MJPEG stream (CH ${channel})`);
+    // Force a new stream by adding timestamp to URL
+    this.streamUrl.set(`/api/camera/stream.mjpeg?ch=${channel}&t=${Date.now()}`);
+    this.error.set(null);
   }
 
   protected exitFullscreen(): void {
-    this.ngOnDestroy();
-
     this.router.navigateByUrl('/');
   }
 }

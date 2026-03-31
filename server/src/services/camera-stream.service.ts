@@ -75,3 +75,49 @@ export async function captureSnapshot(channel: number = 1): Promise<Buffer> {
     });
   });
 }
+
+export function streamFrames(channel: number = 1, res: any): () => void {
+  const rtspUrl = getRtspUrlForChannel(channel);
+  let isActive = true;
+  let frameInterval: NodeJS.Timeout;
+  const boundary = 'frame_boundary';
+
+  res.set('Content-Type', `multipart/x-mixed-replace; boundary=${boundary}`);
+  res.set('Connection', 'close');
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+  const cleanup = () => {
+    isActive = false;
+    if (frameInterval) {
+      clearInterval(frameInterval);
+    }
+  };
+
+  res.on('close', cleanup);
+  res.on('error', cleanup);
+
+  // Send opening boundary
+  res.write(`--${boundary}\r\n`);
+
+  // Capture frames every 100ms (10 fps equivalent)
+  frameInterval = setInterval(async () => {
+    if (!isActive) {
+      return;
+    }
+
+    try {
+      const jpegBuffer = await captureSnapshot(channel);
+      res.write('Content-Type: image/jpeg\r\n');
+      res.write(`Content-Length: ${jpegBuffer.length}\r\n`);
+      res.write('Content-Disposition: inline; filename="frame.jpg"\r\n');
+      res.write('\r\n');
+      res.write(jpegBuffer);
+      res.write(`\r\n--${boundary}\r\n`);
+    } catch (err) {
+      console.error('[StreamFrames] Frame capture error:', err);
+      // Continue streaming, skip this frame on error
+    }
+  }, 100);
+
+  return cleanup;
+}
