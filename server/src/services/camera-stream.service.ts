@@ -7,7 +7,8 @@ const HLS_SEGMENT_TIME = 2; // seconds per segment
 const HLS_LIST_SIZE = 3; // keep 3 segments in playlist
 const RTSP_URL = process.env.CAMERA_RTSP_URL ?? 'rtsp://admin:Al22jb!123@192.168.68.63:554/Streaming/Channels/102';
 const HLS_PLAYLIST_FILENAME = 'stream.m3u8';
-const HLS_SEGMENT_FILENAME_PATTERN = 'segment-%03d.ts';
+const HLS_INIT_FILENAME = 'init.mp4';
+const HLS_SEGMENT_FILENAME_PATTERN = 'segment-%03d.m4s';
 
 let ffmpegProcess: ChildProcess | null = null;
 let isStreaming = false;
@@ -45,13 +46,17 @@ export function startStream(): void {
     '-profile:v', 'baseline',
     '-level:v', '3.1',
     '-pix_fmt', 'yuv420p',
+    '-r', '12',
+    '-fps_mode', 'cfr',
     '-g', '24',
     '-keyint_min', '24',
     '-sc_threshold', '0',
     '-f', 'hls',
     '-hls_time', String(HLS_SEGMENT_TIME),
     '-hls_list_size', String(HLS_LIST_SIZE),
-    '-hls_flags', 'delete_segments+append_list',
+    '-hls_flags', 'delete_segments+append_list+independent_segments',
+    '-hls_segment_type', 'fmp4',
+    '-hls_fmp4_init_filename', HLS_INIT_FILENAME,
     '-hls_segment_filename', segmentPattern,
     hlsPath
   ]);
@@ -107,7 +112,7 @@ function cleanupStreamFiles(): void {
     if (existsSync(STREAMS_DIR)) {
       readdirSync(STREAMS_DIR).forEach((file) => {
         const filePath = path.join(STREAMS_DIR, file);
-        if (file.endsWith('.ts') || file === HLS_PLAYLIST_FILENAME) {
+        if (file.endsWith('.m4s') || file === HLS_PLAYLIST_FILENAME || file === HLS_INIT_FILENAME) {
           unlinkSync(filePath);
         }
       });

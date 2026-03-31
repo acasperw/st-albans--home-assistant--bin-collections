@@ -97,23 +97,29 @@ router.get('/camera/stream.m3u8', (req: Request, res: Response) => {
   }
 });
 
-// GET /api/camera/*.ts - serve HLS segments produced by ffmpeg
-router.get(/\/camera\/[A-Za-z0-9._-]+\.ts$/, (req: Request, res: Response) => {
-  const segmentName = path.basename(req.path);
-  const segmentPath = getStreamFileFsPath(segmentName);
+// GET /api/camera/*.(m4s|mp4|ts) - serve HLS media files produced by ffmpeg
+router.get(/\/camera\/[A-Za-z0-9._-]+\.(m4s|mp4|ts)$/, (req: Request, res: Response) => {
+  const mediaFileName = path.basename(req.path);
+  const mediaFilePath = getStreamFileFsPath(mediaFileName);
 
-  if (!existsSync(segmentPath)) {
-    res.status(404).send('Segment not found');
+  if (!existsSync(mediaFilePath)) {
+    res.status(404).send('Media file not found');
     return;
   }
 
   try {
-    res.set('Content-Type', 'video/MP2T');
+    if (mediaFileName.endsWith('.m4s')) {
+      res.set('Content-Type', 'video/iso.segment');
+    } else if (mediaFileName.endsWith('.mp4')) {
+      res.set('Content-Type', 'video/mp4');
+    } else {
+      res.set('Content-Type', 'video/MP2T');
+    }
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(segmentPath);
+    res.sendFile(mediaFilePath);
   } catch (err) {
-    console.error('[CameraRoute] Error sending segment:', err);
-    res.status(500).send('Failed to send segment');
+    console.error('[CameraRoute] Error sending media file:', err);
+    res.status(500).send('Failed to send media file');
   }
 });
 
