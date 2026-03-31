@@ -16,7 +16,10 @@ import HLS from 'hls.js';
           <video
             #videoPlayer
             autoplay
+            muted
             playsinline
+            controls
+            preload="auto"
             class="video-player"
           ></video>
         }
@@ -24,6 +27,9 @@ import HLS from 'hls.js';
           <div class="error-message">
             {{ error() }}
           </div>
+        }
+        @if (!error() && status()) {
+          <div class="status-message">{{ status() }}</div>
         }
       </div>
       <div class="controls">
@@ -76,6 +82,18 @@ import HLS from 'hls.js';
       color: #ff6b6b;
     }
 
+    .status-message {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.9rem;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
     .controls {
       position: absolute;
       top: 12px;
@@ -119,6 +137,7 @@ export class CameraComponent {
   protected videoPlayer = viewChild<HTMLVideoElement>('videoPlayer');
   protected isLoading = signal(true);
   protected error = signal<string | null>(null);
+  protected status = signal<string>('Waiting for stream...');
 
   private hls: HLS | null = null;
 
@@ -157,6 +176,9 @@ export class CameraComponent {
       return;
     }
 
+    video.muted = true;
+    this.attachVideoEventLogging(video);
+
     // Check if HLS.js is supported
     if (HLS.isSupported()) {
       this.hls = new HLS({
@@ -165,34 +187,74 @@ export class CameraComponent {
         backBufferLength: 90
       });
 
+      this.status.set('Loading stream manifest...');
       this.hls.loadSource(hlsUrl);
       this.hls.attachMedia(video);
 
+      this.hls.on(HLS.Events.MEDIA_ATTACHED, () => {
+        this.status.set('Media attached');
+      });
+
       this.hls.on(HLS.Events.MANIFEST_PARSED, () => {
         console.log('[CameraComponent] HLS stream ready');
+        this.status.set('Stream ready');
         this.isLoading.set(false);
         video.play().catch(err => {
           console.error('[CameraComponent] Autoplay failed:', err);
+          this.status.set('Autoplay blocked, use play control');
         });
+      });
+
+      this.hls.on(HLS.Events.FRAG_LOADED, () => {
+        this.status.set('Receiving video...');
       });
 
       this.hls.on(HLS.Events.ERROR, (event: any, data: any) => {
         console.error('[CameraComponent] HLS error:', data);
         if (data.fatal) {
           this.error.set(`Stream error: ${data.type}`);
+          this.status.set('');
+          return;
         }
+
+        this.status.set(`HLS warning: ${data.details ?? data.type}`);
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // Fallback for native HLS support (Safari)
       video.src = hlsUrl;
+      this.status.set('Using native HLS playback');
       this.isLoading.set(false);
       video.play().catch(err => {
         console.error('[CameraComponent] Autoplay failed:', err);
+        this.status.set('Autoplay blocked, use play control');
       });
     } else {
       this.error.set('HLS not supported by this browser');
+      this.status.set('');
       this.isLoading.set(false);
     }
+  }
+
+  private attachVideoEventLogging(video: HTMLVideoElement): void {
+    video.onloadedmetadata = () => {
+      this.status.set('Metadata loaded');
+    };
+
+    video.oncanplay = () => {
+      this.status.set('Ready to play');
+    };
+
+    video.onplaying = () => {
+      this.status.set('Playing');
+      this.isLoading.set(false);
+    };
+
+    video.onerror = () => {
+      const mediaError = video.error;
+      const message = mediaError ? `Video error code ${mediaError.code}` : 'Video playback error';
+      this.error.set(message);
+      this.status.set('');
+    };
   }
 
   protected exitFullscreen(): void {
