@@ -150,3 +150,70 @@ export function getStreamFileFsPath(fileName: string): string {
 export function getLastStreamError(): string | null {
   return lastStreamError;
 }
+
+export async function captureSnapshot(): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', [
+      '-hide_banner',
+      '-loglevel', 'error',
+      '-rtsp_transport', 'tcp',
+      '-rtsp_flags', 'prefer_tcp',
+      '-i', RTSP_URL,
+      '-an',
+      '-frames:v', '1',
+      '-q:v', '2',
+      '-f', 'image2pipe',
+      '-vcodec', 'mjpeg',
+      'pipe:1'
+    ]);
+
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    let settled = false;
+
+    const timeout = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      ffmpeg.kill('SIGTERM');
+      reject(new Error('Snapshot capture timed out'));
+    }, 8000);
+
+    ffmpeg.stdout.on('data', (chunk: Buffer) => {
+      stdoutChunks.push(chunk);
+    });
+
+    ffmpeg.stderr.on('data', (chunk: Buffer) => {
+      stderrChunks.push(chunk);
+    });
+
+    ffmpeg.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeout);
+      reject(error);
+    });
+
+    ffmpeg.on('close', (code) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeout);
+
+      if (code === 0 && stdoutChunks.length > 0) {
+        resolve(Buffer.concat(stdoutChunks));
+        return;
+      }
+
+      const stderr = Buffer.concat(stderrChunks).toString().trim();
+      reject(new Error(stderr || `Snapshot capture failed with code ${code}`));
+    });
+  });
+}

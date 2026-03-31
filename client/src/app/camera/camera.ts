@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import HLS from 'hls.js';
@@ -13,20 +13,22 @@ import HLS from 'hls.js';
           <div class="loading">Initializing stream...</div>
         }
         @if (!error()) {
-          <video
-            #videoPlayer
-            autoplay
-            muted
-            playsinline
-            controls
-            preload="auto"
-            class="video-player"
-          ></video>
+          @if (snapshotUrl()) {
+            <img [src]="snapshotUrl()!" class="video-player" alt="Camera snapshot" />
+          } @else {
+            <video
+              #videoPlayer
+              autoplay
+              muted
+              playsinline
+              controls
+              preload="auto"
+              class="video-player"
+            ></video>
+          }
         }
         @if (error()) {
-          <div class="error-message">
-            {{ error() }}
-          </div>
+          <div class="error-message">{{ error() }}</div>
         }
         @if (!error() && status()) {
           <div class="status-message">{{ status() }}</div>
@@ -42,14 +44,10 @@ import HLS from 'hls.js';
   styles: [`
     .camera-container {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: #000;
       z-index: 1000;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
@@ -57,10 +55,10 @@ import HLS from 'hls.js';
     .video-wrapper {
       width: 100%;
       height: 100%;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
     }
 
     .video-player {
@@ -98,8 +96,6 @@ import HLS from 'hls.js';
       position: absolute;
       top: 12px;
       right: 12px;
-      display: flex;
-      gap: 8px;
       z-index: 10;
     }
 
@@ -116,30 +112,22 @@ import HLS from 'hls.js';
       align-items: center;
       justify-content: center;
       backdrop-filter: blur(4px);
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.8);
-        border-color: rgba(255, 255, 255, 0.7);
-      }
-
-      &:active {
-        transform: scale(0.95);
-      }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CameraComponent {
+export class CameraComponent implements OnDestroy {
   private router = inject(Router);
   private http = inject(HttpClient);
 
   protected videoPlayer = viewChild<HTMLVideoElement>('videoPlayer');
   protected isLoading = signal(true);
   protected error = signal<string | null>(null);
-  protected status = signal<string>('Waiting for stream...');
+  protected status = signal('Waiting for stream...');
+  protected snapshotUrl = signal<string | null>(null);
 
   private hls: HLS | null = null;
+  private snapshotRefreshId: number | null = null;
 
   constructor() {
     effect(() => {
@@ -147,18 +135,28 @@ export class CameraComponent {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+
+    if (this.snapshotRefreshId !== null) {
+      window.clearInterval(this.snapshotRefreshId);
+      this.snapshotRefreshId = null;
+    }
+  }
+
   private initializeStream(): void {
-    this.http.post<{ success: boolean; hlsUrl: string; error?: string }>(
-      '/api/camera/start',
-      {}
-    ).subscribe({
+    this.http.post<{ success: boolean; hlsUrl: string; error?: string }>('/api/camera/start', {}).subscribe({
       next: (response) => {
         if (response.success && response.hlsUrl) {
-          this.setupHLSStream(response.hlsUrl);
-        } else {
-          this.error.set(response.error ?? 'Failed to start stream');
-          this.isLoading.set(false);
+          this.setupHlsStream(response.hlsUrl);
+          return;
         }
+
+        this.error.set(response.error ?? 'Failed to start stream');
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error('[CameraComponent] Stream start failed:', err);
@@ -168,7 +166,7 @@ export class CameraComponent {
     });
   }
 
-  private setupHLSStream(hlsUrl: string): void {
+  private setupHlsStream(hlsUrl: string): void {
     const video = this.videoPlayer();
     if (!video) {
       this.error.set('Video element not found');
@@ -179,60 +177,59 @@ export class CameraComponent {
     video.muted = true;
     this.attachVideoEventLogging(video);
 
-    // Check if HLS.js is supported
-    if (HLS.isSupported()) {
-      this.hls = new HLS({
-        enableWorker: false,
-        lowLatencyMode: true,
-        backBufferLength: 90
-      });
-
-      this.status.set('Loading stream manifest...');
-      this.hls.loadSource(hlsUrl);
-      this.hls.attachMedia(video);
-
-      this.hls.on(HLS.Events.MEDIA_ATTACHED, () => {
-        this.status.set('Media attached');
-      });
-
-      this.hls.on(HLS.Events.MANIFEST_PARSED, () => {
-        console.log('[CameraComponent] HLS stream ready');
-        this.status.set('Stream ready');
+    if (!HLS.isSupported()) {
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = hlsUrl;
+        this.status.set('Using native HLS playback');
         this.isLoading.set(false);
-        video.play().catch(err => {
+        void video.play().catch((err: unknown) => {
           console.error('[CameraComponent] Autoplay failed:', err);
           this.status.set('Autoplay blocked, use play control');
         });
-      });
+        return;
+      }
 
-      this.hls.on(HLS.Events.FRAG_LOADED, () => {
-        this.status.set('Receiving video...');
-      });
+      this.startSnapshotFallback('HLS not supported by this browser');
+      return;
+    }
 
-      this.hls.on(HLS.Events.ERROR, (event: any, data: any) => {
-        console.error('[CameraComponent] HLS error:', data);
-        if (data.fatal) {
-          this.error.set(`Stream error: ${data.type}`);
-          this.status.set('');
-          return;
-        }
+    this.hls = new HLS({
+      enableWorker: false,
+      lowLatencyMode: true,
+      backBufferLength: 90
+    });
 
-        this.status.set(`HLS warning: ${data.details ?? data.type}`);
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Fallback for native HLS support (Safari)
-      video.src = hlsUrl;
-      this.status.set('Using native HLS playback');
+    this.status.set('Loading stream manifest...');
+    this.hls.loadSource(hlsUrl);
+    this.hls.attachMedia(video);
+
+    this.hls.on(HLS.Events.MEDIA_ATTACHED, () => {
+      this.status.set('Media attached');
+    });
+
+    this.hls.on(HLS.Events.MANIFEST_PARSED, () => {
+      this.status.set('Stream ready');
       this.isLoading.set(false);
-      video.play().catch(err => {
+      void video.play().catch((err: unknown) => {
         console.error('[CameraComponent] Autoplay failed:', err);
         this.status.set('Autoplay blocked, use play control');
       });
-    } else {
-      this.error.set('HLS not supported by this browser');
-      this.status.set('');
-      this.isLoading.set(false);
-    }
+    });
+
+    this.hls.on(HLS.Events.FRAG_LOADED, () => {
+      this.status.set('Receiving video...');
+    });
+
+    this.hls.on(HLS.Events.ERROR, (_event: unknown, data: { fatal?: boolean; details?: string; type?: string }) => {
+      console.error('[CameraComponent] HLS error:', data);
+
+      if (data.fatal || data.details === 'internalException') {
+        this.startSnapshotFallback(data.details ?? data.type ?? 'HLS error');
+        return;
+      }
+
+      this.status.set(`HLS warning: ${data.details ?? data.type ?? 'unknown'}`);
+    });
   }
 
   private attachVideoEventLogging(video: HTMLVideoElement): void {
@@ -252,24 +249,40 @@ export class CameraComponent {
     video.onerror = () => {
       const mediaError = video.error;
       const message = mediaError ? `Video error code ${mediaError.code}` : 'Video playback error';
-      this.error.set(message);
-      this.status.set('');
+      this.startSnapshotFallback(message);
     };
   }
 
-  protected exitFullscreen(): void {
-    // Clean up HLS
+  private startSnapshotFallback(reason: string): void {
+    if (this.snapshotRefreshId !== null) {
+      this.status.set('Using snapshot fallback');
+      return;
+    }
+
     if (this.hls) {
       this.hls.destroy();
       this.hls = null;
     }
 
-    // Stop stream
+    this.error.set(null);
+    this.isLoading.set(false);
+    this.status.set(`Using snapshot fallback (${reason})`);
+
+    const refreshSnapshot = () => {
+      this.snapshotUrl.set(`/api/camera/snapshot.jpg?t=${Date.now()}`);
+    };
+
+    refreshSnapshot();
+    this.snapshotRefreshId = window.setInterval(refreshSnapshot, 2000);
+  }
+
+  protected exitFullscreen(): void {
+    this.ngOnDestroy();
+
     this.http.post('/api/camera/stop', {}).subscribe({
       error: (err) => console.error('[CameraComponent] Stop stream error:', err)
     });
 
-    // Navigate back
     this.router.navigateByUrl('/');
   }
 }

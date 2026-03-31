@@ -10,7 +10,8 @@ import {
   initStreamDirectory,
   getHLSManifestFsPath,
   getStreamFileFsPath,
-  getLastStreamError
+  getLastStreamError,
+  captureSnapshot
 } from '../services/camera-stream.service';
 
 const router = Router();
@@ -74,6 +75,19 @@ router.post('/camera/stop', (req: Request, res: Response) => {
   } catch (err) {
     console.error('[CameraRoute] Error stopping stream:', err);
     res.status(500).json({ success: false, error: String(err) });
+  }
+});
+
+// GET /api/camera/snapshot.jpg - capture a single JPEG frame from RTSP
+router.get('/camera/snapshot.jpg', async (req: Request, res: Response) => {
+  try {
+    const imageBuffer = await captureSnapshot();
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.send(imageBuffer);
+  } catch (err) {
+    console.error('[CameraRoute] Error capturing snapshot:', err);
+    res.status(502).json({ error: String(err) });
   }
 });
 
