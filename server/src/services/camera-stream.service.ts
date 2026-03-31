@@ -99,7 +99,7 @@ export function streamFrames(channel: number = 1, res: any): () => void {
   // Send opening boundary
   res.write(`--${boundary}\r\n`);
 
-  // Capture frames every 400ms (~2.5 fps) to avoid overwhelming NVR with connection attempts
+  // Capture frames every 500ms (~2 fps) to avoid overwhelming NVR with connection attempts
   frameInterval = setInterval(async () => {
     if (!isActive) {
       return;
@@ -117,7 +117,7 @@ export function streamFrames(channel: number = 1, res: any): () => void {
       console.error('[StreamFrames] Frame capture error:', err);
       // Continue streaming, skip this frame on error
     }
-  }, 400);
+  }, 500);
 
   return cleanup;
 }
