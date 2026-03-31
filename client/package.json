@@ -31,7 +31,6 @@
     "@angular/router": "^21.2.6",
     "@patter/ngx-components": "^21.1.8",
     "@patter/patter-core-styles": "^1.3.13",
-    "hls.js": "^1.4.12",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

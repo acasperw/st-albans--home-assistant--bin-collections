@@ -7,7 +7,6 @@ import { mealRouter } from './routes/meal.route';
 import { timerRouter } from './routes/timer.route';
 import { cookingPlanRouter } from './routes/cooking-plan.route';
 import { cameraRouter } from './routes/camera.route';
-import { stopStream } from './services/camera-stream.service';
 import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
@@ -102,6 +101,5 @@ app.listen(Number(PORT), HOST, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
-  stopStream();
   process.exit(0);
 });
