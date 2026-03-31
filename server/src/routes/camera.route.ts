@@ -1,13 +1,36 @@
 import { Router, Request, Response } from 'express';
 import path from 'path';
 import { existsSync, readFileSync } from 'fs';
-import { startStream, stopStream, isStreamActive, getStreamStatus, getHLSPlaylistPath, initStreamDirectory } from '../services/camera-stream.service';
+import {
+  startStream,
+  stopStream,
+  isStreamActive,
+  getStreamStatus,
+  getHLSPlaylistPath,
+  initStreamDirectory,
+  getHLSManifestFsPath,
+  getStreamFileFsPath,
+  getLastStreamError
+} from '../services/camera-stream.service';
 
 const router = Router();
-const STREAMS_DIR = path.join(__dirname, '..', '..', 'data', 'streams');
 
 // Initialize stream directory on module load
 initStreamDirectory();
+
+async function waitForManifest(timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (existsSync(getHLSManifestFsPath())) {
+      return true;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+
+  return false;
+}
 
 // GET /api/camera/status - check if stream is running
 router.get('/camera/status', (req: Request, res: Response) => {
@@ -15,22 +38,28 @@ router.get('/camera/status', (req: Request, res: Response) => {
   res.json({
     active: isStreamActive(),
     status: status,
-    hlsUrl: isStreamActive() ? getHLSPlaylistPath() : null
+    hlsUrl: isStreamActive() ? getHLSPlaylistPath() : null,
+    error: getLastStreamError()
   });
 });
 
 // POST /api/camera/start - start streaming
-router.post('/camera/start', (req: Request, res: Response) => {
+router.post('/camera/start', async (req: Request, res: Response) => {
   try {
     if (!isStreamActive()) {
       startStream();
-      // Give ffmpeg a moment to start creating segments
-      setTimeout(() => {
-        res.json({ success: true, message: 'Stream started', hlsUrl: getHLSPlaylistPath() });
-      }, 1000);
-    } else {
-      res.json({ success: true, message: 'Stream already running', hlsUrl: getHLSPlaylistPath() });
+      const ready = await waitForManifest(8000);
+
+      if (!ready) {
+        res.status(502).json({
+          success: false,
+          error: getLastStreamError() ?? 'Stream did not become ready in time'
+        });
+        return;
+      }
     }
+
+    res.json({ success: true, message: 'Stream ready', hlsUrl: getHLSPlaylistPath() });
   } catch (err) {
     console.error('[CameraRoute] Error starting stream:', err);
     res.status(500).json({ success: false, error: String(err) });
@@ -50,10 +79,10 @@ router.post('/camera/stop', (req: Request, res: Response) => {
 
 // GET /api/camera/stream.m3u8 - serve HLS manifest
 router.get('/camera/stream.m3u8', (req: Request, res: Response) => {
-  const manifestPath = path.join(STREAMS_DIR, 'stream.m3u8');
+  const manifestPath = getHLSManifestFsPath();
 
   if (!existsSync(manifestPath)) {
-    res.status(404).json({ error: 'Stream not available' });
+    res.status(404).json({ error: getLastStreamError() ?? 'Stream not available' });
     return;
   }
 
@@ -68,10 +97,10 @@ router.get('/camera/stream.m3u8', (req: Request, res: Response) => {
   }
 });
 
-// GET /api/camera/segment-*.ts - serve HLS segments
-router.get(/\/camera\/segment-\d+\.ts$/, (req: Request, res: Response) => {
+// GET /api/camera/*.ts - serve HLS segments produced by ffmpeg
+router.get(/\/camera\/[A-Za-z0-9._-]+\.ts$/, (req: Request, res: Response) => {
   const segmentName = path.basename(req.path);
-  const segmentPath = path.join(STREAMS_DIR, segmentName);
+  const segmentPath = getStreamFileFsPath(segmentName);
 
   if (!existsSync(segmentPath)) {
     res.status(404).send('Segment not found');

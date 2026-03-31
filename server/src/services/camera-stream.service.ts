@@ -1,16 +1,18 @@
 import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
-import { existsSync, mkdirSync, readdirSync, unlinkSync, statSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs';
 
 const STREAMS_DIR = path.join(__dirname, '..', '..', 'data', 'streams');
 const HLS_SEGMENT_TIME = 2; // seconds per segment
 const HLS_LIST_SIZE = 3; // keep 3 segments in playlist
 const RTSP_URL = 'rtsp://admin:Al22jb!123@192.168.68.63:554/Streaming/Channels/101';
-const RTSP_TIMEOUT = 5000; // 5 second timeout to detect stream unavailable
+const HLS_PLAYLIST_FILENAME = 'stream.m3u8';
+const HLS_SEGMENT_FILENAME_PATTERN = 'segment-%03d.ts';
 
 let ffmpegProcess: ChildProcess | null = null;
 let isStreaming = false;
-let lastHealthCheck = 0;
+let streamStartedAt = 0;
+let lastStreamError: string | null = null;
 
 export function initStreamDirectory(): void {
   if (!existsSync(STREAMS_DIR)) {
@@ -22,9 +24,10 @@ export function startStream(): void {
   if (isStreaming) return;
 
   initStreamDirectory();
+  cleanupStreamFiles();
 
-  const hlsPath = path.join(STREAMS_DIR, 'stream.m3u8');
-  const segmentPattern = path.join(STREAMS_DIR, 'segment-%03d.ts');
+  const hlsPath = path.join(STREAMS_DIR, HLS_PLAYLIST_FILENAME);
+  const segmentPattern = path.join(STREAMS_DIR, HLS_SEGMENT_FILENAME_PATTERN);
 
   // ffmpeg: convert RTSP to HLS segments (with digest auth support)
   ffmpegProcess = spawn('ffmpeg', [
@@ -41,21 +44,22 @@ export function startStream(): void {
     '-f', 'hls',
     '-hls_time', String(HLS_SEGMENT_TIME),
     '-hls_list_size', String(HLS_LIST_SIZE),
-    '-hls_flags', 'delete_segments',
-    '-hls_playlist_type', 'event',
+    '-hls_flags', 'delete_segments+append_list',
+    '-hls_segment_filename', segmentPattern,
     hlsPath
   ]);
 
   ffmpegProcess.on('error', (err) => {
     console.error('[CameraStream] ffmpeg spawn failed:', err.message);
+    lastStreamError = err.message;
     isStreaming = false;
   });
 
   ffmpegProcess.stderr?.on('data', (data) => {
     const msg = data.toString();
-    // Log only important messages
-    if (msg.includes('error') || msg.includes('Connection refused')) {
-      console.error('[CameraStream] ffmpeg:', msg.slice(0, 100));
+    if (/error|401|403|unauthorized|forbidden|timed out|refused/i.test(msg)) {
+      lastStreamError = msg.trim();
+      console.error('[CameraStream] ffmpeg:', msg.trim());
     }
   });
 
@@ -66,6 +70,8 @@ export function startStream(): void {
   });
 
   isStreaming = true;
+  streamStartedAt = Date.now();
+  lastStreamError = null;
   console.log('[CameraStream] Starting stream conversion (RTSP → HLS)');
 }
 
@@ -76,13 +82,17 @@ export function stopStream(): void {
   ffmpegProcess.kill('SIGTERM');
   ffmpegProcess = null;
   isStreaming = false;
+  streamStartedAt = 0;
 
-  // Clean up segment files
+  cleanupStreamFiles();
+}
+
+function cleanupStreamFiles(): void {
   try {
     if (existsSync(STREAMS_DIR)) {
       readdirSync(STREAMS_DIR).forEach((file) => {
         const filePath = path.join(STREAMS_DIR, file);
-        if (file.startsWith('segment-') || file === 'stream.m3u8') {
+        if (file.endsWith('.ts') || file === HLS_PLAYLIST_FILENAME) {
           unlinkSync(filePath);
         }
       });
@@ -100,11 +110,23 @@ export function getStreamStatus(): { active: boolean; uptime: number; lastCheck:
   const now = Date.now();
   return {
     active: isStreamActive(),
-    uptime: isStreaming ? now - lastHealthCheck : 0,
+    uptime: isStreaming ? now - streamStartedAt : 0,
     lastCheck: now
   };
 }
 
 export function getHLSPlaylistPath(): string {
   return '/api/camera/stream.m3u8';
+}
+
+export function getHLSManifestFsPath(): string {
+  return path.join(STREAMS_DIR, HLS_PLAYLIST_FILENAME);
+}
+
+export function getStreamFileFsPath(fileName: string): string {
+  return path.join(STREAMS_DIR, fileName);
+}
+
+export function getLastStreamError(): string | null {
+  return lastStreamError;
 }

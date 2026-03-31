@@ -137,13 +137,13 @@ export class CameraComponent {
         if (response.success && response.hlsUrl) {
           this.setupHLSStream(response.hlsUrl);
         } else {
-          this.error.set('Failed to start stream');
+          this.error.set(response.error ?? 'Failed to start stream');
           this.isLoading.set(false);
         }
       },
       error: (err) => {
         console.error('[CameraComponent] Stream start failed:', err);
-        this.error.set('Unable to connect to camera stream');
+        this.error.set(err.error?.error ?? 'Unable to connect to camera stream');
         this.isLoading.set(false);
       }
     });
