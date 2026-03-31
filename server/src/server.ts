@@ -6,6 +6,8 @@ import { binCollectionRouter } from './routes/bin-collection.route';
 import { mealRouter } from './routes/meal.route';
 import { timerRouter } from './routes/timer.route';
 import { cookingPlanRouter } from './routes/cooking-plan.route';
+import { cameraRouter } from './routes/camera.route';
+import { stopStream } from './services/camera-stream.service';
 import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
@@ -53,6 +55,9 @@ app.use('/api', timerRouter);
 // Mount cooking plan routes under /api
 app.use('/api', cookingPlanRouter);
 
+// Mount camera routes under /api
+app.use('/api', cameraRouter);
+
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   const cacheAge = cache.timestamp ? Math.floor((Date.now() - cache.timestamp) / 1000 / 60) : null;
@@ -97,5 +102,6 @@ app.listen(Number(PORT), HOST, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
+  stopStream();
   process.exit(0);
 });

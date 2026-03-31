@@ -29,5 +29,9 @@ export const routes: Routes = [
   {
     path: 'timers',
     loadComponent: () => import('./timers/timers').then(m => m.TimersComponent)
+  },
+  {
+    path: 'camera',
+    loadComponent: () => import('./camera/camera').then(m => m.CameraComponent)
   }
 ];
