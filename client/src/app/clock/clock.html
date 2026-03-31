@@ -1,8 +1,26 @@
-<div class="clock-overlay" [class.active]="active()" aria-hidden="true">
+<div class="clock-overlay" [class.active]="active()" [class.has-timers]="hasExtras()" aria-hidden="true">
 	<app-weather-badge [active]="active()" />
-	<div class="clock-face">
-		<span class="time-main">{{ time() }}</span>
-		<span class="time-seconds">{{ seconds() }}</span>
+	<div class="clock-content">
+		<div class="clock-face">
+			<span class="time-main">{{ time() }}</span>
+			<span class="time-seconds">{{ seconds() }}</span>
+		</div>
+		@if (activeTimers().length || cookingAction()) {
+			<div class="timer-list">
+				@for (timer of activeTimers(); track timer.id) {
+					<div class="timer-item" [class.timer-urgent]="timer.remainingSecs <= 60">
+						<span class="timer-name">{{ timer.name }}</span>
+						<span class="timer-countdown">{{ formatRemaining(timer.remainingSecs) }}</span>
+					</div>
+				}
+				@if (cookingAction(); as action) {
+					<div class="timer-item cooking-action" [class.timer-urgent]="action.remainingSecs <= 120">
+						<span class="timer-name">{{ action.label }} {{ action.itemName }}</span>
+						<span class="timer-countdown">{{ formatRemaining(action.remainingSecs) }}</span>
+					</div>
+				}
+			</div>
+		}
 	</div>
 	@if (upcomingMeal()) {
 		<div class="tomorrow-meal">

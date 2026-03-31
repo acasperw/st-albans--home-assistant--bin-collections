@@ -4,6 +4,8 @@ import path from 'path';
 import { HealthCheckResponse, TestScenario } from './types';
 import { binCollectionRouter } from './routes/bin-collection.route';
 import { mealRouter } from './routes/meal.route';
+import { timerRouter } from './routes/timer.route';
+import { cookingPlanRouter } from './routes/cooking-plan.route';
 import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
@@ -44,6 +46,12 @@ app.use('/api', binCollectionRouter);
 
 // Mount meal planner routes under /api
 app.use('/api', mealRouter);
+
+// Mount timer routes under /api
+app.use('/api', timerRouter);
+
+// Mount cooking plan routes under /api
+app.use('/api', cookingPlanRouter);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

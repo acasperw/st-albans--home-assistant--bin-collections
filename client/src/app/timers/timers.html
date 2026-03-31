@@ -1,0 +1,109 @@
+<div class="timers-page">
+	<nav class="tab-bar">
+		<button class="tab-btn" [class.active]="activeTab() === 'timers'" (click)="activeTab.set('timers')">
+			⏱️ Timers
+		</button>
+		<button class="tab-btn" [class.active]="activeTab() === 'planner'" (click)="activeTab.set('planner')">
+			🍳 Cooking Plan
+		</button>
+	</nav>
+
+	@if (activeTab() === 'timers') {
+		@if (hasTimers()) {
+			<section class="active-timers">
+				<h2>Active</h2>
+				<ul class="timer-list">
+					@for (timer of timers(); track timer.id) {
+						<li class="timer-card" [class.urgent]="timer.remaining <= 60">
+							<div class="timer-info">
+								<span class="timer-name">{{ timer.name }}</span>
+								<span class="timer-remaining">{{ formatRemaining(timer.remaining) }}</span>
+							</div>
+							<button class="btn-cancel" (click)="cancelTimer(timer.id)">✕</button>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+
+		@if (error()) {
+			<div class="error-message">{{ error() }}</div>
+		}
+
+		<section class="quick-start">
+			<h2>Quick Start</h2>
+			<div class="preset-grid">
+				@for (preset of presets; track preset.secs) {
+					<button class="preset-btn" [disabled]="submitting()" (click)="startPreset(preset)">
+						{{ preset.label }}
+					</button>
+				}
+			</div>
+		</section>
+
+		<section class="custom-timer">
+			<h2>Custom Timer</h2>
+			<div class="custom-form">
+				<input
+					type="text"
+					placeholder="Name (optional)"
+					[value]="customName()"
+					(input)="customName.set($any($event.target).value)"
+					maxlength="50"
+				/>
+				<div class="minutes-row">
+					<input
+						type="number"
+						placeholder="Minutes"
+						min="1"
+						[value]="customMinutes()"
+						(input)="customMinutes.set($any($event.target).value)"
+						(keydown.enter)="startCustom()"
+					/>
+					<button class="btn-start" [disabled]="submitting()" (click)="startCustom()">Start</button>
+				</div>
+			</div>
+		</section>
+	}
+
+	@if (activeTab() === 'planner') {
+		<section class="planner-section">
+			<app-finish-time-input />
+
+			<h2>Menu Items</h2>
+			<app-items-editor />
+
+			<div class="planner-actions">
+				<button
+					class="btn-calculate"
+					[disabled]="planService.saving()"
+					(click)="planService.save()"
+				>
+					{{ planService.saving() ? 'Calculating...' : 'Calculate Plan' }}
+				</button>
+				@if (planService.hasPlan()) {
+					<button class="btn-clear-plan" (click)="planService.clear()">Clear Plan</button>
+				}
+			</div>
+		</section>
+
+		@if (planService.hasPlan()) {
+			<section class="plan-result">
+				<h2>Your Plan</h2>
+				<app-plan-narrative />
+
+				<button class="btn-toggle-table" (click)="showTable.set(!showTable())">
+					{{ showTable() ? 'Hide' : 'Show' }} detailed table
+				</button>
+
+				@if (showTable()) {
+					<app-schedule-table />
+				}
+			</section>
+		}
+	}
+
+	<footer class="timers-footer">
+		<a routerLink="/meals">← Meals</a>
+	</footer>
+</div>

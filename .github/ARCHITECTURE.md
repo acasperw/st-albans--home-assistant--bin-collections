@@ -17,6 +17,7 @@ Express serves the Angular build as static files and provides the API.
 | Bin collections | `GET /api/bin-collection` | `server/src/routes/bin-collection.route.ts`, `server/src/services/bin-collection.service.ts` |
 | Meal plan (public) | `GET /api/meals/plan`, `POST /api/meals/suggestions` | `server/src/routes/meal.route.ts`, `server/src/services/meal.service.ts` |
 | Meal admin (auth) | `GET/PUT /api/meals/suggestions`, CRUD `/api/meals/*` | Same files, guarded by `requireAdmin` middleware (Bearer token) |
+| Timers | `GET/POST /api/timers`, `DELETE /api/timers/:id` | `server/src/routes/timer.route.ts`, `server/src/services/timer.service.ts` |
 | Health | `GET /api/health` | `server/src/server.ts` |
 
 **Data sources**: St Albans council API (Veolia proxy) for bins, Open-Meteo for weather (client-side), SQLite for meals.
@@ -31,6 +32,7 @@ Express serves the Angular build as static files and provides the API.
 | `/` | `NextBinCollection` | Default on Pi screen; phones redirected to `/meals` via `phoneRedirectGuard` |
 | `/meals` | `MealsComponent` | Public meal suggestions + 7-day plan |
 | `/meals/admin` | `MealAdminComponent` | Lazy-loaded, password-protected |
+| `/timers` | `TimersComponent` | Phone UI for creating/cancelling kitchen timers |
 
 ## Key client services (`client/src/app/shared/services/`)
 
@@ -42,10 +44,11 @@ Express serves the Angular build as static files and provides the API.
 | `bin-collection-notification.service.ts` | "Put bins out tonight" reminders (noon–midnight before collection) |
 | `temperature-notification.service.ts` | Frost/cold warnings based on overnight forecast |
 | `meal.service.ts` | HTTP client for meal plan API |
+| `timer.service.ts` | Polls server for active timers every 2s; exposes signals for clock overlay |
 
 ## UI behaviour
 
-- **Idle/screensaver**: After 2 min inactivity, clock overlay appears with weather badge + tonight's dinner
+- **Idle/screensaver**: After 2 min inactivity, clock overlay appears with weather badge + tonight's dinner + active timers (clock shrinks when timers present)
 - **Night mode**: Bin display dims 19:00–06:00
 - **Weather badge**: Rotates between current temp, rain chance, and daily max
 - **Notifications**: Cycle every 8 seconds; appear during idle state
@@ -56,4 +59,4 @@ Express serves the Angular build as static files and provides the API.
 - Brightness timers: `deploy/brightness-day.timer`, `deploy/brightness-night.timer`
 - Build script: `deploy/build-release.sh`
 - Network watchdog: `deploy/network-watchdog.service`
-- Cloudflare Tunnel: `deploy/cloudflared-tunnel.service`
+**Data**: Timers are held in-memory on the server (no persistence — ephemeral by design). Expired timers auto-purge after 5s.

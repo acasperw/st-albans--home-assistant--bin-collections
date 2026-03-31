@@ -25,5 +25,9 @@ export const routes: Routes = [
   {
     path: 'meals/admin',
     loadComponent: () => import('./meals/admin/admin').then(m => m.MealAdminComponent)
+  },
+  {
+    path: 'timers',
+    loadComponent: () => import('./timers/timers').then(m => m.TimersComponent)
   }
 ];
