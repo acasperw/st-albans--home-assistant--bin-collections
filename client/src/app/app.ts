@@ -20,9 +20,6 @@ const IS_PHONE = /Android|iPhone|iPod|Windows Phone|IEMobile|Mobile/i.test(navig
     <app-clock [active]="idle.isIdle()" />
     <app-notification-wrapper [isIdle]="idle.isIdle()" />
     @if (!idle.isIdle()) {
-      <button class="camera-fab" (click)="openCamera()" aria-label="Camera">
-        📹
-      </button>
       <button class="timer-fab" (click)="openTimers()" aria-label="Timers">
         @if (hasActiveExtras()) {
           <span class="fab-dot"></span>
@@ -36,30 +33,6 @@ const IS_PHONE = /Android|iPhone|iPod|Windows Phone|IEMobile|Mobile/i.test(navig
       position: fixed;
       bottom: 12px;
       right: 12px;
-      z-index: 900;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.5);
-      font-size: 1.4rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-      transition: opacity 0.3s ease, background 0.3s ease;
-
-      &:active {
-        background: rgba(255,255,255,0.2);
-      }
-    }
-
-    .camera-fab {
-      position: fixed;
-      bottom: 12px;
-      right: 72px;
       z-index: 900;
       width: 48px;
       height: 48px;
@@ -138,10 +111,6 @@ export class App {
 
   protected openTimers(): void {
     this.router.navigateByUrl('/timers');
-  }
-
-  protected openCamera(): void {
-    this.router.navigateByUrl('/camera');
   }
 
   private handleBarcodeScanned(barcode: string): void {

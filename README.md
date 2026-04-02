@@ -5,7 +5,7 @@ Simple Angular + Node (Express) app for a Raspberry Pi kiosk display showing bin
 On the Raspberry Pi (first time). These steps install a current Node (NodeSource) *or* you can use `nvm` (see below). Using a system-wide Node simplifies the systemd service.
 ```
 sudo apt-get update
-sudo apt-get install -y curl chromium git gh ffmpeg
+sudo apt-get install -y curl chromium git gh
 # Install Node (Option A: system-wide via NodeSource – recommended for service)
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs

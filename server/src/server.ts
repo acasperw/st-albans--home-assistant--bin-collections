@@ -6,7 +6,6 @@ import { binCollectionRouter } from './routes/bin-collection.route';
 import { mealRouter } from './routes/meal.route';
 import { timerRouter } from './routes/timer.route';
 import { cookingPlanRouter } from './routes/cooking-plan.route';
-import { cameraRouter } from './routes/camera.route';
 import { cache, isCacheValid } from './services/bin-collection.service';
 
 // Configuration
@@ -53,9 +52,6 @@ app.use('/api', timerRouter);
 
 // Mount cooking plan routes under /api
 app.use('/api', cookingPlanRouter);
-
-// Mount camera routes under /api
-app.use('/api', cameraRouter);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
