@@ -1,7 +1,16 @@
 import axios from 'axios';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import path from 'path';
 import { ApiResponse, CacheData, ProcessedApiResponse } from '../types';
 import { processApiResponse, getDaysUntil } from '../data-processor';
 import { generateFallbackSchedule, isApiBlocked } from './fallback-schedule.service';
+
+const DISK_CACHE_FILE = path.join(__dirname, '..', '..', 'data', 'bin-collection-cache.json');
+
+interface DiskCachePayload {
+  data: ApiResponse;
+  timestamp: number;
+}
 
 // Cache configuration (1 week)
 export const cache: CacheData = {
@@ -10,6 +19,50 @@ export const cache: CacheData = {
   timestamp: null,
   TTL: 7 * 24 * 60 * 60 * 1000
 };
+
+function loadCacheFromDisk(): void {
+  try {
+    if (!existsSync(DISK_CACHE_FILE)) return;
+
+    const raw = readFileSync(DISK_CACHE_FILE, 'utf8');
+    const parsed = JSON.parse(raw) as Partial<DiskCachePayload>;
+    if (!parsed.data || typeof parsed.timestamp !== 'number') {
+      return;
+    }
+
+    const age = Date.now() - parsed.timestamp;
+    if (age >= cache.TTL) {
+      console.warn('Persistent bin cache is older than TTL, ignoring it');
+      return;
+    }
+
+    cache.data = parsed.data;
+    const processed = processApiResponse(parsed.data);
+    processed.isFallback = false;
+    cache.processedData = processed;
+    cache.timestamp = parsed.timestamp;
+    console.log(`Loaded persistent bin cache from disk (age: ${Math.floor(age / 1000 / 60)} minutes)`);
+  } catch (error) {
+    console.warn(
+      'Failed to load persistent bin cache from disk:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+  }
+}
+
+function persistCacheToDisk(payload: DiskCachePayload): void {
+  try {
+    mkdirSync(path.dirname(DISK_CACHE_FILE), { recursive: true });
+    writeFileSync(DISK_CACHE_FILE, JSON.stringify(payload), 'utf8');
+  } catch (error) {
+    console.warn(
+      'Failed to persist bin cache to disk:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+  }
+}
+
+loadCacheFromDisk();
 
 // Check if cache still valid
 export function isCacheValid(): boolean {
@@ -45,6 +98,7 @@ export async function fetchFreshData(uprn: string, retryCount = 3, retryDelay = 
       processedData.isFallback = false;
       cache.processedData = processedData;
       cache.timestamp = Date.now();
+      persistCacheToDisk({ data: response.data, timestamp: cache.timestamp });
 
       if (attempt > 1) {
         console.log(`✓ Successfully fetched data on attempt ${attempt}`);
