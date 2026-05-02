@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CookingPlanService, NarrativeGroup, ScheduledItem } from '../../shared/services/cooking-plan.service';
+import { CookingPlanService, ScheduledItem } from '../../shared/services/cooking-plan.service';
 
 @Component({
   selector: 'app-plan-narrative',
@@ -10,26 +10,31 @@ import { CookingPlanService, NarrativeGroup, ScheduledItem } from '../../shared/
     } @else {
       <div class="narrative">
         @for (group of svc.groupedSchedule(); track group.putIn.getTime()) {
-          <p>
-            At <strong>{{ svc.formatTime(group.putIn) }}</strong>,
-            @for (item of group.items; track item.id; let i = $index) {
-              <strong>{{ item.name }}</strong>{{ joinText(i, group.items.length) }}
+          <div class="group" [class.group-past]="group.isPast" [class.group-next]="group.isNext">
+            @if (group.isNext) {
+              <span class="next-badge">⬅ Up next</span>
             }
-            {{ group.items.length === 1 ? 'goes' : 'go' }} in
-            @if (!group.isFirstGroup && group.deltaFromPrevGroup) {
-              (<strong>{{ group.deltaFromPrevGroup }}</strong> min after <strong>{{ group.prevGroupLastName }}</strong>)
+            <p>
+              At <strong>{{ svc.formatTime(group.putIn) }}</strong>,
+              @for (item of group.items; track item.id; let i = $index) {
+                <strong>{{ item.name }}</strong>{{ joinText(i, group.items.length) }}
+              }
+              {{ group.items.length === 1 ? 'goes' : 'go' }} in
+              @if (!group.isFirstGroup && group.deltaFromPrevGroup) {
+                (<strong>{{ group.deltaFromPrevGroup }}</strong> min after <strong>{{ group.prevGroupLastName }}</strong>)
+              }
+              for <strong>{{ durationText(group.items) }}</strong> minutes.
+            </p>
+            @for (item of group.items; track item.id) {
+              @if (item.restMins) {
+                <p class="rest-note">
+                  Take <strong>{{ item.name }}</strong> out at <strong>{{ svc.formatTime(toDate(item.takeOut)) }}</strong>
+                  then rest <strong>{{ item.restMins }}</strong> minutes
+                  (ready {{ svc.formatTime(toDate(item.ready)) }}).
+                </p>
+              }
             }
-            for <strong>{{ durationText(group.items) }}</strong> minutes.
-          </p>
-          @for (item of group.items; track item.id) {
-            @if (item.restMins) {
-              <p class="rest-note">
-                Take <strong>{{ item.name }}</strong> out at <strong>{{ svc.formatTime(toDate(item.takeOut)) }}</strong>
-                then rest <strong>{{ item.restMins }}</strong> minutes
-                (ready {{ svc.formatTime(toDate(item.ready)) }}).
-              </p>
-            }
-          }
+          </div>
         }
         <p class="serve-time">
           Everything ready to serve at <strong>{{ svc.finishTime() }}</strong>.
@@ -55,6 +60,28 @@ import { CookingPlanService, NarrativeGroup, ScheduledItem } from '../../shared/
       strong {
         color: var(--wp--preset--color--primary);
       }
+    }
+
+    .group-past {
+      opacity: 0.45;
+      text-decoration: line-through;
+      text-decoration-color: rgba(0, 0, 0, 0.25);
+    }
+
+    .group-next {
+      background: rgba(var(--wp--preset--color--primary-rgb, 0, 0, 0), 0.06);
+      border-left: 3px solid var(--wp--preset--color--primary);
+      padding: 0.35rem 0.5rem;
+      border-radius: 0 var(--wp--custom--default-border-radius, 4px) var(--wp--custom--default-border-radius, 4px) 0;
+      margin: 0.4rem 0;
+    }
+
+    .next-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--wp--preset--color--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .rest-note {

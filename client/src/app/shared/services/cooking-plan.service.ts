@@ -19,6 +19,8 @@ export interface NarrativeGroup {
   putIn: Date;
   items: ScheduledItem[];
   isFirstGroup: boolean;
+  isPast: boolean;
+  isNext: boolean;
   deltaFromPrevGroup: number | null;
   prevGroupLastName: string | null;
 }
@@ -40,12 +42,15 @@ export class CookingPlanService {
   schedule = signal<ScheduledItem[]>([]);
   hasPlan = signal(false);
   saving = signal(false);
+  private now = signal(Date.now());
+  private nowInterval: ReturnType<typeof setInterval>;
 
   /** Grouped schedule entries for narrative display */
   groupedSchedule = computed<NarrativeGroup[]>(() => {
     const sched = this.schedule();
     if (!sched.length) return [];
 
+    const now = this.now();
     const groups: NarrativeGroup[] = [];
     for (const item of sched) {
       const putIn = new Date(item.putIn);
@@ -60,11 +65,16 @@ export class CookingPlanService {
           putIn,
           items: [item],
           isFirstGroup: !last,
+          isPast: putIn.getTime() <= now,
+          isNext: false,
           deltaFromPrevGroup: delta,
           prevGroupLastName: prevLastItem?.name ?? null,
         });
       }
     }
+    // Mark the first non-past group as "next"
+    const nextGroup = groups.find(g => !g.isPast);
+    if (nextGroup) nextGroup.isNext = true;
     return groups;
   });
 
@@ -94,6 +104,8 @@ export class CookingPlanService {
 
   constructor() {
     this.load();
+    // Tick every 15s so the narrative auto-advances when putIn times pass
+    this.nowInterval = setInterval(() => this.now.set(Date.now()), 15_000);
   }
 
   load(): void {
