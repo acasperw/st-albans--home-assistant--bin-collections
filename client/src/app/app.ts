@@ -31,34 +31,39 @@ const IS_PHONE = /Android|iPhone|iPod|Windows Phone|IEMobile|Mobile/i.test(navig
   styles: [`
     .timer-fab {
       position: fixed;
-      bottom: 12px;
-      right: 12px;
-      z-index: 900;
-      width: 48px;
-      height: 48px;
+      // Keep clear of touchscreen edge dead-zones (Pi LCD bezel/digitizer overscan)
+      bottom: 24px;
+      right: 24px;
+      // Sit above the bin-collection notification (z-index 10001) so it's always tappable
+      z-index: 10050;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.5);
-      font-size: 1.4rem;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+      font-size: 2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(4px);
+      // Prevent 300ms tap delay and double-tap zoom on touch devices
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      // backdrop-filter intentionally omitted: causes hit-test/repaint quirks on Pi Chromium
       transition: opacity 0.3s ease, background 0.3s ease;
 
       &:active {
-        background: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.25);
       }
     }
 
     .fab-dot {
       position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 8px;
-      height: 8px;
+      top: 8px;
+      right: 8px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: #f7c948;
     }
