@@ -5,20 +5,26 @@ import {
   addMeal,
   deleteMeal,
   renameMeal,
+} from '../repositories/meal.repository';
+import {
   getMealPlan,
   setMealPlanEntry,
   deleteMealPlanEntry,
+} from '../repositories/meal-plan.repository';
+import {
   addSuggestion,
   getAllSuggestions,
   updateSuggestionStatus,
+} from '../repositories/suggestion.repository';
+import { addMealRequest } from '../repositories/meal-request.repository';
+import {
   normalizeMealName,
   findNearMatch,
   findExactMatch,
   findExactLibraryMatch,
   findExactPendingMatch,
-  addMealRequest,
-  validateSuggestion
-} from '../services/meal.service';
+} from '../domain/meal-matcher';
+import { validateSuggestion } from '../domain/suggestion-validator';
 import { toLocalDateStr } from '../utils/date.utils';
 
 const ADMIN_PASSWORD = process.env.MEAL_ADMIN_PASSWORD || '';
