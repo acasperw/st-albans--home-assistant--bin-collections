@@ -1,13 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal, OnInit, DestroyRef, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ProcessedApiResponse, EnhancedCollectionDate } from './models';
 
-import { interval } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FoodCaddyComponent } from '../shared/components/food-caddy/food-caddy.component';
 import { WheelieBinComponent } from '../shared/components/wheelie-bin/wheelie-bin.component';
 import { BinCollectionUtils } from '../shared/utils/bin-collection.utils';
+import { PollManager, PollHandle } from '../shared/services/poll-manager.service';
 
 @Component({
   selector: 'app-next-bin-collection',
@@ -20,10 +19,12 @@ import { BinCollectionUtils } from '../shared/utils/bin-collection.utils';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NextBinCollection implements OnInit {
+export class NextBinCollection implements OnInit, OnDestroy {
 
   private http = inject(HttpClient);
-  private destroyRef = inject(DestroyRef);
+  private pollManager = inject(PollManager);
+  private collectionPoll: PollHandle | null = null;
+  private nightModePoll: PollHandle | null = null;
 
   public loading = signal(true);
   public collectionDates = signal<EnhancedCollectionDate[]>([]);
@@ -73,19 +74,27 @@ export class NextBinCollection implements OnInit {
 
   ngOnInit(): void {
     this.updateNightMode();
-    this.fetchCollectionDates();
 
-    // Automatic refresh every 3 hours (10800000 ms) - server cache handles upstream throttling
-    interval(3 * 60 * 60 * 1000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.fetchCollectionDates();
-      });
+    // Refresh collection data every 3 hours (server cache handles upstream throttling).
+    // Idle-aware: pauses when no one's around, refreshes once on activity.
+    this.collectionPoll = this.pollManager.register({
+      intervalMs: 3 * 60 * 60 * 1000,
+      fn: () => this.fetchCollectionDates(),
+    });
 
-    // Periodic night mode reassessment every 10 minutes (in case app left running past boundary)
-    interval(10 * 60 * 1000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateNightMode());
+    // Night-mode reassessment must keep ticking even when idle so the display
+    // dims/brightens at the right moment.
+    this.nightModePoll = this.pollManager.register({
+      intervalMs: 10 * 60 * 1000,
+      fn: () => this.updateNightMode(),
+      runImmediately: false,
+      pauseWhenIdle: false,
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.collectionPoll?.stop();
+    this.nightModePoll?.stop();
   }
 
   private updateNightMode(): void {

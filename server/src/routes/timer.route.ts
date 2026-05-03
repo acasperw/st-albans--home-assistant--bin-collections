@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { getActiveTimers, createTimer, deleteTimer } from '../services/timer.service';
+import { LIMITS } from '../config/limits';
 
 export const timerRouter = Router();
 
-const MAX_NAME_LENGTH = 50;
-const MAX_DURATION_SECS = 24 * 60 * 60; // 24 hours
-const MAX_ACTIVE_TIMERS = 10;
+const MAX_NAME_LENGTH = LIMITS.TIMER_NAME_MAX;
+const MAX_DURATION_SECS = LIMITS.TIMER_DURATION_MAX_SECS;
+const MAX_ACTIVE_TIMERS = LIMITS.MAX_ACTIVE_TIMERS;
 
 // GET /timers — list active timers
 timerRouter.get('/timers', (_req: Request, res: Response) => {

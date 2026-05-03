@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
+import { PollManager, PollHandle } from '../shared/services/poll-manager.service';
+import { todayLocalStr } from '../shared/utils/date.utils';
 
 const NAME_STORAGE_KEY = 'meal_suggested_by';
 const SUCCESS_RESET_MS = 3000;
@@ -19,7 +19,8 @@ const PLAN_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 })
 export class MealsComponent implements OnInit, OnDestroy {
   private mealService = inject(MealService);
-  private destroyRef = inject(DestroyRef);
+  private pollManager = inject(PollManager);
+  private planPoll: PollHandle | null = null;
 
   isAdmin = signal(false);
 
@@ -28,7 +29,7 @@ export class MealsComponent implements OnInit, OnDestroy {
   error = signal<string | null>(null);
 
   // Today's date string for highlighting
-  todayStr = signal(new Date().toISOString().split('T')[0]!);
+  todayStr = signal(todayLocalStr());
 
   // Suggestion form state
   suggestMealName = signal('');
@@ -52,12 +53,12 @@ export class MealsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAdmin.set(this.mealService.isAuthenticated());
 
-    this.loadPlan();
-
-    // Refresh the meal plan every 30 minutes
-    interval(PLAN_REFRESH_MS)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadPlan());
+    // Idle-aware refresh: pauses when the kitchen is unattended,
+    // re-fetches once on activity so the plan is fresh.
+    this.planPoll = this.pollManager.register({
+      intervalMs: PLAN_REFRESH_MS,
+      fn: () => this.loadPlan(),
+    });
 
     const savedName = localStorage.getItem(NAME_STORAGE_KEY);
     if (savedName) {
@@ -66,6 +67,7 @@ export class MealsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.planPoll?.stop();
     if (this.resetTimerId !== null) {
       window.clearTimeout(this.resetTimerId);
       this.resetTimerId = null;

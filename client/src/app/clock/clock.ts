@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, signal, computed, input, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
+import { Component, OnInit, OnDestroy, signal, computed, input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { WeatherBadgeComponent } from '../shared/components/weather-badge/weather-badge.component';
 import { MealService, MealPlanDay } from '../shared/services/meal.service';
-import { TimerService, Timer } from '../shared/services/timer.service';
+import { TimerService } from '../shared/services/timer.service';
 import { CookingPlanService } from '../shared/services/cooking-plan.service';
+import { PollManager, PollHandle } from '../shared/services/poll-manager.service';
+import { toLocalDateStr } from '../shared/utils/date.utils';
 
 const MEAL_REFRESH_MS = 30 * 60 * 1000; // 30 minutes
 const PLAN_REFRESH_MS = 60 * 1000; // 1 minute
@@ -20,8 +20,10 @@ export class Clock implements OnInit, OnDestroy {
   private mealService = inject(MealService);
   protected timerService = inject(TimerService);
   protected cookingPlanService = inject(CookingPlanService);
-  private destroyRef = inject(DestroyRef);
+  private pollManager = inject(PollManager);
   private secondTimer: ReturnType<typeof setInterval> | null = null;
+  private mealPlanPoll: PollHandle | null = null;
+  private cookingPlanPoll: PollHandle | null = null;
   private now = signal(new Date());
   private mealPlan = signal<MealPlanDay[]>([]);
 
@@ -76,7 +78,7 @@ export class Clock implements OnInit, OnDestroy {
     if (isEvening) {
       targetDate.setDate(targetDate.getDate() + 1);
     }
-    const dateStr = this.toLocalDateStr(targetDate);
+    const dateStr = toLocalDateStr(targetDate);
     const day = this.mealPlan().find(d => d.date === dateStr);
     return day?.entry ? (day.entry.meal_name ?? day.entry.custom_name) : null;
   });
@@ -87,17 +89,17 @@ export class Clock implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.alignAndStartSecondTicks();
-    this.loadTomorrowMeal();
 
-    // Refresh the meal plan every 30 minutes
-    interval(MEAL_REFRESH_MS)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadTomorrowMeal());
-
-    // Refresh cooking plan every minute (server computes schedule based on current time)
-    interval(PLAN_REFRESH_MS)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.cookingPlanService.load());
+    // Idle-aware polls: pause when the kitchen is unattended, refresh on activity.
+    this.mealPlanPoll = this.pollManager.register({
+      intervalMs: MEAL_REFRESH_MS,
+      fn: () => this.loadTomorrowMeal(),
+    });
+    this.cookingPlanPoll = this.pollManager.register({
+      intervalMs: PLAN_REFRESH_MS,
+      fn: () => this.cookingPlanService.load(),
+      runImmediately: false, // CookingPlanService.load() is already invoked from its own constructor
+    });
   }
 
   ngOnDestroy(): void {
@@ -105,6 +107,8 @@ export class Clock implements OnInit, OnDestroy {
       clearInterval(this.secondTimer);
       this.secondTimer = null;
     }
+    this.mealPlanPoll?.stop();
+    this.cookingPlanPoll?.stop();
   }
 
   private loadTomorrowMeal(): void {
@@ -122,14 +126,6 @@ export class Clock implements OnInit, OnDestroy {
       this.now.set(new Date());
       this.secondTimer = setInterval(() => this.now.set(new Date()), 1000);
     }, 1000 - ms);
-  }
-
-  /** Format a Date as YYYY-MM-DD using local time (avoids toISOString UTC shift). */
-  private toLocalDateStr(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
   }
 
   /** Format remaining seconds as H:MM:SS or MM:SS */

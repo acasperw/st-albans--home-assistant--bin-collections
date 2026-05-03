@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { getPlan, setPlan, clearPlan, CookingPlanItem } from '../services/cooking-plan.service';
+import { LIMITS } from '../config/limits';
 
 export const cookingPlanRouter = Router();
 
-const MAX_NAME_LENGTH = 50;
-const MAX_ITEMS = 20;
-const MAX_COOK_MINS = 1440; // 24 hours
-const MAX_REST_MINS = 1440;
+const MAX_NAME_LENGTH = LIMITS.COOKING_PLAN_NAME_MAX;
+const MAX_ITEMS = LIMITS.COOKING_PLAN_MAX_ITEMS;
+const MAX_COOK_MINS = LIMITS.COOKING_PLAN_MAX_COOK_MINS;
+const MAX_REST_MINS = LIMITS.COOKING_PLAN_MAX_REST_MINS;
 
 // GET /cooking-plan — get current plan with computed schedule
 cookingPlanRouter.get('/cooking-plan', (_req: Request, res: Response) => {

@@ -7,6 +7,7 @@ import { mealRouter } from './routes/meal.route';
 import { timerRouter } from './routes/timer.route';
 import { cookingPlanRouter } from './routes/cooking-plan.route';
 import { cache, isCacheValid } from './services/bin-collection.service';
+import { requestLogger } from './middleware/request-logger';
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ const app = express();
 // Using CommonJS compilation; __dirname available after build.
 
 app.use(express.json());
+app.use(requestLogger);
 
 // Serve Angular static files (assumes Angular build outputs browser folder)
 const activeClientDir = path.join(__dirname, '..', '..', 'client', 'dist', 'bin-collection-app', 'browser');
