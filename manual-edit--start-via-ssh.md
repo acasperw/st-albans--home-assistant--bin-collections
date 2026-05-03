@@ -4,7 +4,7 @@ cd /opt/st-albans/server && npm run start
 ```
 Second terminal
 ```
-chromium --noerrdialogs --disable-session-crashed-bubble --disable-infobars --ozone-platform=wayland --enable-features=UseOzonePlatform,WaylandWindowDecorations --kiosk http://localhost:3000
+chromium --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
 ```
 
 # Stop Chrome
