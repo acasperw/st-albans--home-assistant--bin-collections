@@ -254,7 +254,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --kiosk http://localhost:3000
+ExecStart=chromium --no-first-run --noerrdialogs --disable-session-crashed-bubble --disable-infobars --ozone-platform=wayland --enable-features=UseOzonePlatform,WaylandWindowDecorations --kiosk http://localhost:3000
 Restart=on-failure
 RestartSec=5
 
