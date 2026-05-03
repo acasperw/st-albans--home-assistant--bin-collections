@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { NotificationData } from '../../services/notification.service';
+import { Notification } from '../../services/notification-center.service';
 
 @Component({
   selector: 'app-notification',
@@ -167,7 +167,7 @@ import { NotificationData } from '../../services/notification.service';
 })
 export class NotificationComponent {
   // Input properties
-  public notification = input<NotificationData | null>(null);
+  public notification = input<Notification | null>(null);
   public active = input<boolean>(true);
   public allowDismiss = input<boolean>(false);
 

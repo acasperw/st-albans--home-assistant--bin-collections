@@ -4,7 +4,7 @@ import { filter } from 'rxjs';
 import { IdleService } from './shared/services/idle.service';
 import { Clock } from './clock/clock';
 import { BarcodeListenerService } from './shared/services/barcode-listener.service';
-import { NotificationService } from './shared/services/notification.service';
+import { NotificationCenter } from './shared/services/notification-center.service';
 import { BinCollectionNotificationService } from './shared/services/bin-collection-notification.service';
 import { NotificationWrapperComponent } from './shared/components/notification-wrapper/notification-wrapper.component';
 import { TimerService } from './shared/services/timer.service';
@@ -70,7 +70,7 @@ export class App {
   protected idle = inject(IdleService);
   private router = inject(Router);
   private barcodeService = inject(BarcodeListenerService);
-  private notificationService = inject(NotificationService);
+  private notificationCenter = inject(NotificationCenter);
   private binNotificationService = inject(BinCollectionNotificationService);
   private timerService = inject(TimerService);
   private cookingPlanService = inject(CookingPlanService);
@@ -114,23 +114,32 @@ export class App {
   }
 
   private handleBarcodeScanned(barcode: string): void {
-    // Reset suppression on new scan to allow showing notifications again
-    this.notificationService.resetSuppression();
+    // A new scan is fresh user activity — allow previously-dismissed
+    // notifications to re-publish.
+    this.notificationCenter.resetDismissals();
 
     /* Temp */
     if (BarcodeListenerService.isValidBarcode(barcode)) {
-      this.notificationService.setNotification({
+      this.notificationCenter.publish({
+        id: 'barcode:scanned',
+        category: 'barcode',
         type: 'success',
         title: 'Barcode Scanned',
         message: `Scanned barcode: ${barcode}`,
-        icon: '𝄃𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃'
+        icon: '𝄃𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃',
+        createdAt: Date.now(),
+        maxAgeMs: 10_000,
       });
     } else {
-      this.notificationService.setNotification({
+      this.notificationCenter.publish({
+        id: 'barcode:invalid',
+        category: 'barcode',
         type: 'error',
         title: 'Invalid Barcode',
         message: `Scanned barcode is invalid: ${barcode}`,
-        icon: '𝄃𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃'
+        icon: '𝄃𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃',
+        createdAt: Date.now(),
+        maxAgeMs: 10_000,
       });
     }
   }

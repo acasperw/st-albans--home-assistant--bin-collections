@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { interval, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TemperatureNotificationService } from '../../services/temperature-notification.service';
+import { NotificationCenter } from '../../services/notification-center.service';
+
+const TEMP_NOTIFICATION_ID = 'temperature:overnight';
+const TEMP_NOTIFICATION_CATEGORY = 'temperature';
 
 @Component({
   selector: 'app-weather-badge',
@@ -14,7 +17,7 @@ import { TemperatureNotificationService } from '../../services/temperature-notif
 export class WeatherBadgeComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
-  private temperatureNotificationService = inject(TemperatureNotificationService);
+  private notificationCenter = inject(NotificationCenter);
 
   // Parent can hint active state (e.g. clock visible) to pause rotation if desired
   public active = input<boolean>(true);
@@ -107,8 +110,9 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
     this.http.get<any>(url).pipe(catchError(() => of(null))).subscribe(data => {
       if (!data) return;
 
-      // Reset notification suppression on each weather fetch
-      this.temperatureNotificationService.resetSuppression();
+      // Reset dismissal memory on each weather fetch so a re-published
+      // overnight warning can show again if conditions still warrant it.
+      this.notificationCenter.resetDismissals();
 
       // Current weather data
       if (data.current) {
@@ -146,8 +150,7 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
           if (typeof overnightMin === 'number') {
             const roundedMin = Math.round(overnightMin);
             this.overnightMinTemp.set(roundedMin);
-            // Trigger notification check for overnight temperature
-            this.temperatureNotificationService.checkOvernightTemperature(roundedMin);
+            this.publishOvernightTempNotification(roundedMin);
           }
         }
 
@@ -156,6 +159,43 @@ export class WeatherBadgeComponent implements OnInit, OnDestroy {
 
       this.ensureValidStateIndex();
     });
+  }
+
+  /**
+   * Publish (or clear) the overnight low-temperature notification based on
+   * the rounded forecast minimum. Notification cannot be dismissed while
+   * idle so the warning stays visible during evening hours when the kiosk
+   * is unattended.
+   */
+  private publishOvernightTempNotification(overnightMinTemp: number): void {
+    const createdAt = Date.now();
+    const base = {
+      id: TEMP_NOTIFICATION_ID,
+      category: TEMP_NOTIFICATION_CATEGORY,
+      createdAt,
+      priority: 2, // outranks bin reminders when both are active
+      dismissibleWhenIdle: false,
+    } as const;
+
+    if (overnightMinTemp <= 0) {
+      this.notificationCenter.publish({
+        ...base,
+        type: 'error',
+        title: `${overnightMinTemp}°C tonight`,
+        message: 'Cover outdoor taps, & all vulnerable plants',
+        icon: '🥶',
+      });
+    } else if (overnightMinTemp < 4) {
+      this.notificationCenter.publish({
+        ...base,
+        type: 'warning',
+        title: `${overnightMinTemp}°C tonight`,
+        message: 'Protect Mediterranean plants',
+        icon: '⚠️',
+      });
+    } else {
+      this.notificationCenter.clear(TEMP_NOTIFICATION_ID);
+    }
   }
 
   private updateMaxTemperatureState(data: any): void {
